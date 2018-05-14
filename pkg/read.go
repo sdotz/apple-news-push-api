@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"io/ioutil"
+	"bytes"
 )
 
 func ReadArticle(articleId string, apiKey string, apiSecret string, baseUrl string) {
@@ -13,7 +14,7 @@ func ReadArticle(articleId string, apiKey string, apiSecret string, baseUrl stri
 	if err != nil {
 		log.Fatal(err)
 	}
-	req.Header.Set("Authorization", getAuthorization(http.MethodGet, url, apiKey, apiSecret, "", ""))
+	req.Header.Set("Authorization", getAuthorization(http.MethodGet, url, apiKey, apiSecret, "", ioutil.NopCloser(bytes.NewReader([]byte{}))))
 
 	client := &http.Client{}
 
@@ -34,7 +35,7 @@ func ReadChannel(channelId string, apiKey string, apiSecret string, baseUrl stri
 	if err != nil {
 		log.Fatal(err)
 	}
-	req.Header.Set("Authorization", getAuthorization(http.MethodGet, url, apiKey, apiSecret, "", ""))
+	req.Header.Set("Authorization", getAuthorization(http.MethodGet, url, apiKey, apiSecret, "", ioutil.NopCloser(bytes.NewReader([]byte{}))))
 
 	client := &http.Client{}
 
@@ -55,7 +56,7 @@ func ReadSection(sectionId string, apiKey string, apiSecret string, baseUrl stri
 	if err != nil {
 		log.Fatal(err)
 	}
-	req.Header.Set("Authorization", getAuthorization(http.MethodGet, url, apiKey, apiSecret, "", ""))
+	req.Header.Set("Authorization", getAuthorization(http.MethodGet, url, apiKey, apiSecret, "", ioutil.NopCloser(bytes.NewReader([]byte{}))))
 
 	client := &http.Client{}
 

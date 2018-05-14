@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"io/ioutil"
+	"bytes"
 )
 
 func ListSections(channelId string, apiKey string, apiSecret string, baseUrl string) {
@@ -13,7 +14,7 @@ func ListSections(channelId string, apiKey string, apiSecret string, baseUrl str
 	if err != nil {
 		log.Fatal(err)
 	}
-	req.Header.Set("Authorization", getAuthorization(http.MethodGet, url, apiKey, apiSecret, "", ""))
+	req.Header.Set("Authorization", getAuthorization(http.MethodGet, url, apiKey, apiSecret, "", ioutil.NopCloser(bytes.NewReader([]byte{}))))
 
 	client := &http.Client{}
 

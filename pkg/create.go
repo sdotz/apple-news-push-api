@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"net/http"
 	"io/ioutil"
-	"os"
 	"bytes"
 	"mime/multipart"
-	"path/filepath"
 	"io"
-	"github.com/prometheus/common/log"
+	"strings"
+	"net/textproto"
+	"log"
 )
 
 type ContentType string
@@ -21,7 +21,7 @@ const (
 	ContentTypePng         ContentType = "image/png"
 	ContentTypeGif         ContentType = "image/gif"
 	ContentTypeOctetStream ContentType = "application/octet-stream"
-	ContentTypeJson        ContentType = "application/octet-stream"
+	ContentTypeJson        ContentType = "application/json"
 	ContentTypeMultipart   ContentType = "multipart/form-data"
 
 	MaturityRatingKids    = "KIDS"
@@ -53,8 +53,8 @@ func CreateArticle(channelId string, article io.Reader, metadata *Metadata, apiK
 	url := fmt.Sprintf("%s/channels/%s/articles", baseUrl, channelId)
 
 	req, err := prepareMultipartRequest(
-		[]{
-			MultipartUploadComponent{
+		[]MultipartUploadComponent{
+			{
 				Data:        article,
 				Name:        "article.json",
 				FileName:    "article.json",
@@ -68,10 +68,12 @@ func CreateArticle(channelId string, article io.Reader, metadata *Metadata, apiK
 		log.Fatal(err)
 	}
 
-	//Stream the body to authorization to keep memory low?
-	bodyReader, err := req.GetBody()
+	bodyCopy, err := req.GetBody()
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	req.Header.Set("Authorization", getAuthorization(http.MethodPost, url, apiKey, apiSecret, string(ContentTypeMultipart), "asda"))
+	req.Header.Set("Authorization", getAuthorization(http.MethodPost, url, apiKey, apiSecret, strings.Join(req.Header["Content-Type"], ";"), bodyCopy))
 
 	client := &http.Client{}
 
@@ -90,7 +92,12 @@ func prepareMultipartRequest(parts []MultipartUploadComponent, url string) (*htt
 	writer := multipart.NewWriter(body)
 
 	for _, v := range parts {
-		part, err := writer.CreateFormFile(v.Name, v.FileName)
+		h := make(textproto.MIMEHeader)
+		h.Set("Content-Disposition",
+			fmt.Sprintf(`form-data; name="%s"; filename="%s"`,
+				escapeQuotes(v.Name), escapeQuotes(v.FileName)))
+		h.Set("Content-Type", string(v.ContentType))
+		part, err := writer.CreatePart(h)
 		if err != nil {
 			return nil, err
 		}
@@ -100,10 +107,18 @@ func prepareMultipartRequest(parts []MultipartUploadComponent, url string) (*htt
 		}
 	}
 
-	req, err := http.NewRequest(http.MethodPost, url, nil)
+	writer.Close()
+
+	req, err := http.NewRequest(http.MethodPost, url, body)
 	if err != nil {
 		log.Fatal(err)
 	}
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	return req, err
+}
+
+var quoteEscaper = strings.NewReplacer("\\", "\\\\", `"`, "\\\"")
+
+func escapeQuotes(s string) string {
+	return quoteEscaper.Replace(s)
 }

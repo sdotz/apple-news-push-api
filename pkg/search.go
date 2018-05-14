@@ -8,6 +8,7 @@ import (
 	"time"
 	"strconv"
 	"net/url"
+	"bytes"
 )
 
 type ResultPage struct {
@@ -15,7 +16,7 @@ type ResultPage struct {
 }
 
 type SearchResult struct {
-	Id string `json:"id"`
+	Id        string    `json:"id"`
 	CreatedAt time.Time `json:"createdAt"`
 }
 
@@ -66,7 +67,7 @@ func SearchArticles(channelId string, options *SearchArticlesOptions, apiKey str
 
 	options.ApplyToQuery(&query)
 
-	req.Header.Set("Authorization", getAuthorization(http.MethodGet, url, apiKey, apiSecret, "", ""))
+	req.Header.Set("Authorization", getAuthorization(http.MethodGet, url, apiKey, apiSecret, "", ioutil.NopCloser(bytes.NewReader([]byte{}))))
 
 	client := &http.Client{}
 

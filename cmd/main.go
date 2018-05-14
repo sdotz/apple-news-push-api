@@ -24,7 +24,7 @@ var (
 	searchCommand = kingpin.Command("search", "List articles in a channel or section")
 
 	createCommand = kingpin.Command("create", "Create an article")
-	bundlePath    = createCommand.Arg("bundlePath", "Path to the bundle. It should contain article.json and any necessary images.").ExistingFileOrDir()
+	bundlePath    = createCommand.Arg("bundlePath", "Path to the bundle. It should contain article.json and any necessary images.").Required().ExistingFileOrDir()
 
 	updateCommand  = kingpin.Command("update", "Update an article")
 	promoteCommand = kingpin.Command("promote", "Promote an article")
@@ -52,7 +52,6 @@ func main() {
 			log.Fatal(err.Error())
 		}
 		defer f.Close()
-
 		pkg.CreateArticle(*channelId, f, nil, *apiKey, *apiSecret, *baseUrl)
 	case "update":
 	case "promote":
