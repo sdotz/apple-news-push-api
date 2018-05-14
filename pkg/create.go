@@ -62,18 +62,13 @@ func CreateArticle(channelId string, article io.Reader, metadata *Metadata, apiK
 			},
 		},
 		url,
+		apiKey,
+		apiSecret,
 	)
 
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	bodyCopy, err := req.GetBody()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	req.Header.Set("Authorization", getAuthorization(http.MethodPost, url, apiKey, apiSecret, strings.Join(req.Header["Content-Type"], ";"), bodyCopy))
 
 	client := &http.Client{}
 
@@ -87,7 +82,7 @@ func CreateArticle(channelId string, article io.Reader, metadata *Metadata, apiK
 	fmt.Println(string(body))
 }
 
-func prepareMultipartRequest(parts []MultipartUploadComponent, url string) (*http.Request, error) {
+func prepareMultipartRequest(parts []MultipartUploadComponent, url string, apiKey string, apiSecret string) (*http.Request, error) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
@@ -111,9 +106,11 @@ func prepareMultipartRequest(parts []MultipartUploadComponent, url string) (*htt
 
 	req, err := http.NewRequest(http.MethodPost, url, body)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.Header.Set("Authorization", getAuthorization(http.MethodPost, url, apiKey, apiSecret, writer.FormDataContentType(), ioutil.NopCloser(bytes.NewReader(body.Bytes()))))
+
 	return req, err
 }
 
