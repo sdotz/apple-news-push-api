@@ -1,11 +1,11 @@
 package main
 
 import (
-	"gopkg.in/alecthomas/kingpin.v2"
 	"os"
-	"github.com/sdotz/apple-news-push-api/pkg"
 	"log"
 	"time"
+	"github.com/sdotz/apple-news-push-api/pkg/api"
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 const BASE_URL = "https://news-api.apple.com"
@@ -52,13 +52,13 @@ func main() {
 
 	switch command {
 	case "read article":
-		pkg.ReadArticle(*baseUrl, *apiKey, *apiSecret, *articleId)
+		api.ReadArticle(*baseUrl, *apiKey, *apiSecret, *articleId)
 	case "read channel":
-		pkg.ReadChannel(*baseUrl, *apiKey, *apiSecret, *channelId)
+		api.ReadChannel(*baseUrl, *apiKey, *apiSecret, *channelId)
 	case "read section":
-		pkg.ReadSection(*baseUrl, *apiKey, *apiSecret, *sectionId)
+		api.ReadSection(*baseUrl, *apiKey, *apiSecret, *sectionId)
 	case "list":
-		pkg.ListSections(*baseUrl, *apiKey, *apiSecret, *channelId)
+		api.ListSections(*baseUrl, *apiKey, *apiSecret, *channelId)
 	case "search":
 		if from, err := time.Parse("2006-01-02", *searchFromDate); err == nil {
 			searchOptions.FromDate = &from
@@ -66,14 +66,14 @@ func main() {
 		if to, err := time.Parse("2006-01-02", *searchToDate); err == nil {
 			searchOptions.ToDate = &to
 		}
-		pkg.SearchArticles(*baseUrl, *apiKey, *apiSecret, *channelId, searchOptions)
+		api.SearchArticles(*baseUrl, *apiKey, *apiSecret, *channelId, searchOptions)
 	case "create":
 		f, err := os.Open(*bundlePath)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
 		defer f.Close()
-		pkg.CreateArticle(*baseUrl, *apiKey, *apiSecret, *channelId, f, nil)
+		api.CreateArticle(*baseUrl, *apiKey, *apiSecret, *channelId, f, nil)
 	case "update":
 		if len(*updateBundlePath) > 0 {
 			f, err := os.Open(*bundlePath)
@@ -82,33 +82,33 @@ func main() {
 			}
 			defer f.Close()
 
-			pkg.UpdateArticle(*baseUrl, *apiKey, *apiSecret, *articleId, f, updateOptions)
+			api.UpdateArticle(*baseUrl, *apiKey, *apiSecret, *articleId, f, updateOptions)
 		} else {
-			pkg.UpdateArticleMetadata(*baseUrl, *apiKey, *apiSecret, *articleId, updateOptions)
+			api.UpdateArticleMetadata(*baseUrl, *apiKey, *apiSecret, *articleId, updateOptions)
 		}
 	case "promote":
-		pkg.PromoteArticles(*baseUrl, *apiKey, *apiSecret, *promoteSectionId, *promoteArticleIds)
+		api.PromoteArticles(*baseUrl, *apiKey, *apiSecret, *promoteSectionId, *promoteArticleIds)
 	case "delete":
-		pkg.DeleteArticle(*baseUrl, *apiKey, *apiSecret, *deleteArticleId)
+		api.DeleteArticle(*baseUrl, *apiKey, *apiSecret, *deleteArticleId)
 	}
 
 }
 
-func newCreateUpdateOptions(cmd *kingpin.CmdClause) *pkg.Metadata {
-	options := &pkg.Metadata{}
+func newCreateUpdateOptions(cmd *kingpin.CmdClause) *api.Metadata {
+	options := &api.Metadata{}
 	cmd.Flag("sections", "The sections the article should appear in").StringsVar(&options.Links.Sections)
 	cmd.Flag("isSponsored", "Marks the article as sponsored").BoolVar(&options.IsSponsored)
 	cmd.Flag("isPreview", "Sets the article to preview mode").BoolVar(&options.IsPreview)
 	cmd.Flag("accessoryText", "Sets text below the article excerpt in channel view. Default is the author").StringVar(&options.AccessoryText)
-	cmd.Flag("maturityRating", "Sets the article's maturity rating").HintOptions(pkg.MaturityRatingKids, pkg.MaturityRatingMature, pkg.MaturityRatingGeneral).EnumVar(&options.MaturityRating, pkg.MaturityRatingKids, pkg.MaturityRatingMature, pkg.MaturityRatingGeneral)
+	cmd.Flag("maturityRating", "Sets the article's maturity rating").HintOptions(api.MaturityRatingKids, api.MaturityRatingMature, api.MaturityRatingGeneral).EnumVar(&options.MaturityRating, api.MaturityRatingKids, api.MaturityRatingMature, api.MaturityRatingGeneral)
 	cmd.Flag("isCandidateToBeFeatured", "Sets the article as a candidate to be featured").BoolVar(&options.IsCandidateToBeFeatured)
 	cmd.Flag("isHidden", "Sets the article to hidden").BoolVar(&options.IsHidden)
 	return options
 }
 
-func newSearchOptions(cmd *kingpin.CmdClause) *pkg.SearchArticlesOptions {
-	defaultSearchOpts := pkg.DefaultSearchArticlesOptions()
+func newSearchOptions(cmd *kingpin.CmdClause) *api.SearchArticlesOptions {
+	defaultSearchOpts := api.DefaultSearchArticlesOptions()
 	cmd.Flag("pageSize", "The amount of articles per page to return").IntVar(&defaultSearchOpts.PageSize)
-	cmd.Flag("sortDir", "Direction to sort by date").HintOptions(pkg.SORTDIR_ASC, pkg.SORTDIR_DESC).EnumVar(&defaultSearchOpts.SortDir, pkg.SORTDIR_ASC, pkg.SORTDIR_DESC)
+	cmd.Flag("sortDir", "Direction to sort by date").HintOptions(api.SORTDIR_ASC, api.SORTDIR_DESC).EnumVar(&defaultSearchOpts.SortDir, api.SORTDIR_ASC, api.SORTDIR_DESC)
 	return defaultSearchOpts
 }
