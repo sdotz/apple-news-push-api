@@ -8,7 +8,7 @@ import (
 	"bytes"
 )
 
-func ReadArticle(articleId string, apiKey string, apiSecret string, baseUrl string) {
+func ReadArticle(baseUrl string, apiKey string, apiSecret string, articleId string) {
 	url := fmt.Sprintf("%s/articles/%s", baseUrl, articleId)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
@@ -29,7 +29,7 @@ func ReadArticle(articleId string, apiKey string, apiSecret string, baseUrl stri
 
 }
 
-func ReadChannel(channelId string, apiKey string, apiSecret string, baseUrl string) {
+func ReadChannel(baseUrl string, apiKey string, apiSecret string, channelId string) {
 	url := fmt.Sprintf("%s/channels/%s", baseUrl, channelId)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
@@ -50,7 +50,7 @@ func ReadChannel(channelId string, apiKey string, apiSecret string, baseUrl stri
 
 }
 
-func ReadSection(sectionId string, apiKey string, apiSecret string, baseUrl string) {
+func ReadSection(baseUrl string, apiKey string, apiSecret string, sectionId string) {
 	url := fmt.Sprintf("%s/sections/%s", baseUrl, sectionId)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {

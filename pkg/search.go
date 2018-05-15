@@ -55,8 +55,7 @@ func (options *SearchArticlesOptions) ApplyToQuery(query *url.Values) {
 	query.Add("pageToken", options.PageToken)
 }
 
-func SearchArticles(channelId string, options *SearchArticlesOptions, apiKey string, apiSecret string, baseUrl string) {
-
+func SearchArticles(baseUrl string, apiKey string, apiSecret string, channelId string, options *SearchArticlesOptions) {
 	url := fmt.Sprintf("%s/channels/%s/articles", baseUrl, channelId)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
@@ -67,7 +66,9 @@ func SearchArticles(channelId string, options *SearchArticlesOptions, apiKey str
 
 	options.ApplyToQuery(&query)
 
-	req.Header.Set("Authorization", getAuthorization(http.MethodGet, url, apiKey, apiSecret, "", ioutil.NopCloser(bytes.NewReader([]byte{}))))
+	req.URL.RawQuery = query.Encode()
+
+	req.Header.Set("Authorization", getAuthorization(http.MethodGet, req.URL.String(), apiKey, apiSecret, "", ioutil.NopCloser(bytes.NewReader([]byte{}))))
 
 	client := &http.Client{}
 

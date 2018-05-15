@@ -8,7 +8,7 @@ import (
 	"bytes"
 )
 
-func ListSections(channelId string, apiKey string, apiSecret string, baseUrl string) {
+func ListSections(baseUrl string, apiKey string, apiSecret string, channelId string) {
 	url := fmt.Sprintf("%s/channels/%s/sections", baseUrl, channelId)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
