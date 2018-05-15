@@ -66,7 +66,6 @@ func main() {
 		resp, err := c.ReadArticle(articleID)
 		if err != nil {
 			errorAndDie(err)
-			return
 		}
 
 		j, err := json.Marshal(resp)
