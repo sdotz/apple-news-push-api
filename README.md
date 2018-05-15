@@ -10,19 +10,24 @@ The library aims to be complete and easy to use both as tool for interacting wit
 - [X] CLI
 - [ ] Refactor all API methods to return response objects and move JSON printing out to CLI land
 - [ ] Scan article.json for bundle:// URLs, find those files in the bundle, and add to multipart upload
+- [ ] Make CLI friendly with validations and meaningful errors
 - [ ] Add tests
 - [ ] Clean up project structure, dirs, package names etc.
-- [ ] Implement paging search results through channels or iterator
+- [ ] Implement paging searchArticles through channels or iterator
+- [ ] Interactive paging through searchArticles in CLI
 
 
 ## Issues
 
 I think the promoteArticles API might be broken when sending an empty array. Docs say you can do this but all I get back is a server error.
 
+
 ## Usage
 
 Install and use as a command line tool:
 
 `go install github.com/sdotz/apple-news-push-api/cmd/pushapi`
+
+Set the envoriment variables `APPLE_NEWS_API_KEY`, `APPLE_NEWS_API_SECRET`, `CHANNEL_ID`
 
 `anews --help`
