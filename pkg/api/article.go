@@ -32,6 +32,15 @@ const (
 	MaturityRatingGeneral = "GENERAL"
 )
 
+//Client to communicate to Apple API
+type Client struct {
+	Client    *http.Client
+	APIKey    string
+	APISecret string
+	BaseURL   string
+	ChannelID string
+}
+
 type MultipartUploadComponent struct {
 	Data     io.Reader
 	Name     string
@@ -81,22 +90,30 @@ type ReadArticleResponse struct {
 	} `json:"data"`
 }
 
-func ReadArticle(baseUrl string, apiKey string, apiSecret string, articleId string) (*ReadArticleResponse, error) {
-	url := fmt.Sprintf("%s/articles/%s", baseUrl, articleId)
+func NewClient(httpClient *http.Client, key, secret, url, channelID string) *Client {
+	return &Client{
+		Client:    httpClient,
+		APIKey:    key,
+		APISecret: secret,
+		BaseURL:   url,
+		ChannelID: channelID,
+	}
+}
+
+func (c *Client) ReadArticle(articleId string) (*ReadArticleResponse, error) {
+	url := fmt.Sprintf("%s/articles/%s", c.BaseURL, articleId)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	auth, err := getAuthorization(http.MethodGet, url, apiKey, apiSecret, "", ioutil.NopCloser(bytes.NewReader([]byte{})))
+	auth, err := c.getAuthorization(http.MethodGet, url, "", ioutil.NopCloser(bytes.NewReader([]byte{})))
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("Authorization", auth)
 
-	client := &http.Client{}
-
-	resp, err := client.Do(req)
+	resp, err := c.Client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -120,11 +137,10 @@ func ReadArticle(baseUrl string, apiKey string, apiSecret string, articleId stri
 	return &readArticleResp, nil
 }
 
-func CreateArticle(baseUrl string, apiKey string, apiSecret string, channelId string, article io.Reader, metadata *Metadata) error {
+func (c *Client) CreateArticle(article io.Reader, metadata *Metadata) error {
+	url := fmt.Sprintf("%s/channels/%s/articles", c.BaseURL, c.ChannelID)
 
-	url := fmt.Sprintf("%s/channels/%s/articles", baseUrl, channelId)
-
-	req, err := prepareMultipartRequest(
+	req, err := c.prepareMultipartRequest(
 		[]MultipartUploadComponent{
 			{
 				Data:        article,
@@ -134,17 +150,13 @@ func CreateArticle(baseUrl string, apiKey string, apiSecret string, channelId st
 			},
 		},
 		url,
-		apiKey,
-		apiSecret,
 	)
 
 	if err != nil {
 		return err
 	}
 
-	client := &http.Client{}
-
-	resp, err := client.Do(req)
+	resp, err := c.Client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -153,8 +165,8 @@ func CreateArticle(baseUrl string, apiKey string, apiSecret string, channelId st
 	return resp.Body.Close()
 }
 
-func UpdateArticle(baseUrl string, apiKey string, apiSecret string, articleId string, article io.Reader, metadata *Metadata) error {
-	url := fmt.Sprintf("%s/articles/%s", baseUrl, articleId)
+func (c *Client) UpdateArticle(articleId string, article io.Reader, metadata *Metadata) error {
+	url := fmt.Sprintf("%s/articles/%s", c.BaseURL, articleId)
 
 	metadataBytes, err := json.Marshal(metadata)
 	if err != nil {
@@ -175,20 +187,16 @@ func UpdateArticle(baseUrl string, apiKey string, apiSecret string, articleId st
 		},
 	}
 
-	req, err := prepareMultipartRequest(
+	req, err := c.prepareMultipartRequest(
 		parts,
 		url,
-		apiKey,
-		apiSecret,
 	)
 
 	if err != nil {
 		return err
 	}
 
-	client := &http.Client{}
-
-	resp, err := client.Do(req)
+	resp, err := c.Client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -197,15 +205,15 @@ func UpdateArticle(baseUrl string, apiKey string, apiSecret string, articleId st
 	return resp.Body.Close()
 }
 
-func UpdateArticleMetadata(baseUrl string, apiKey string, apiSecret string, articleId string, metadata *Metadata) error {
-	url := fmt.Sprintf("%s/articles/%s", baseUrl, articleId)
+func (c *Client) UpdateArticleMetadata(articleId string, metadata *Metadata) error {
+	url := fmt.Sprintf("%s/articles/%s", c.BaseURL, articleId)
 
 	metadataBytes, err := json.Marshal(metadata)
 	if err != nil {
 		return err
 	}
 
-	req, err := prepareMultipartRequest(
+	req, err := c.prepareMultipartRequest(
 		[]MultipartUploadComponent{
 			{
 				Data:        bytes.NewReader(metadataBytes),
@@ -214,17 +222,13 @@ func UpdateArticleMetadata(baseUrl string, apiKey string, apiSecret string, arti
 			},
 		},
 		url,
-		apiKey,
-		apiSecret,
 	)
 
 	if err != nil {
 		return err
 	}
 
-	client := &http.Client{}
-
-	resp, err := client.Do(req)
+	resp, err := c.Client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -233,8 +237,8 @@ func UpdateArticleMetadata(baseUrl string, apiKey string, apiSecret string, arti
 	return resp.Body.Close()
 }
 
-func PromoteArticles(baseUrl string, apiKey string, apiSecret string, sectionId string, articleIds []string) error {
-	url := fmt.Sprintf("%s/sections/%s/promotedArticles", baseUrl, sectionId)
+func (c *Client) PromoteArticles(sectionId string, articleIds []string) error {
+	url := fmt.Sprintf("%s/sections/%s/promotedArticles", c.BaseURL, sectionId)
 
 	promotedArticles := PromoteArticlesRequest{}
 	if len(articleIds) == 0 {
@@ -249,14 +253,13 @@ func PromoteArticles(baseUrl string, apiKey string, apiSecret string, sectionId 
 
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(bodyBytes))
 
-	auth, err := getAuthorization(http.MethodPost, url, apiKey, apiSecret, "", ioutil.NopCloser(bytes.NewReader([]byte{})))
+	auth, err := c.getAuthorization(http.MethodPost, url, "", ioutil.NopCloser(bytes.NewReader([]byte{})))
 	if err != nil {
 		return err
 	}
 	req.Header.Set("Authorization", auth)
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := c.Client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -265,22 +268,20 @@ func PromoteArticles(baseUrl string, apiKey string, apiSecret string, sectionId 
 	return resp.Body.Close()
 }
 
-func DeleteArticle(baseUrl string, apiKey string, apiSecret string, articleId string) error {
-	url := fmt.Sprintf("%s/articles/%s", baseUrl, articleId)
+func (c *Client) DeleteArticle(articleId string) error {
+	url := fmt.Sprintf("%s/articles/%s", c.BaseURL, articleId)
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
 	if err != nil {
 		return err
 	}
 
-	auth, err := getAuthorization(http.MethodDelete, url, apiKey, apiSecret, "", ioutil.NopCloser(bytes.NewReader([]byte{})))
+	auth, err := c.getAuthorization(http.MethodDelete, url, "", ioutil.NopCloser(bytes.NewReader([]byte{})))
 	if err != nil {
 		return err
 	}
 	req.Header.Set("Authorization", auth)
 
-	client := &http.Client{}
-
-	resp, err := client.Do(req)
+	resp, err := c.Client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -289,7 +290,7 @@ func DeleteArticle(baseUrl string, apiKey string, apiSecret string, articleId st
 	return resp.Body.Close()
 }
 
-func prepareMultipartRequest(parts []MultipartUploadComponent, url string, apiKey string, apiSecret string) (*http.Request, error) {
+func (c *Client) prepareMultipartRequest(parts []MultipartUploadComponent, url string) (*http.Request, error) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
@@ -322,7 +323,7 @@ func prepareMultipartRequest(parts []MultipartUploadComponent, url string, apiKe
 	}
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
-	auth, err := getAuthorization(http.MethodPost, url, apiKey, apiSecret, writer.FormDataContentType(), ioutil.NopCloser(bytes.NewReader(body.Bytes())))
+	auth, err := c.getAuthorization(http.MethodPost, url, writer.FormDataContentType(), ioutil.NopCloser(bytes.NewReader(body.Bytes())))
 	if err != nil {
 		return nil, err
 	}

@@ -37,14 +37,14 @@ type ListSectionsResponse struct {
 	} `json:"data"`
 }
 
-func ReadSection(baseUrl string, apiKey string, apiSecret string, sectionId string) (*ReadSectionResponse, error) {
-	url := fmt.Sprintf("%s/sections/%s", baseUrl, sectionId)
+func (c *Client) ReadSection(sectionId string) (*ReadSectionResponse, error) {
+	url := fmt.Sprintf("%s/sections/%s", c.BaseURL, sectionId)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	auth, err := getAuthorization(http.MethodGet, url, apiKey, apiSecret, "", ioutil.NopCloser(bytes.NewReader([]byte{})))
+	auth, err := c.getAuthorization(http.MethodGet, url, "", ioutil.NopCloser(bytes.NewReader([]byte{})))
 	if err != nil {
 		return nil, err
 	}
@@ -73,14 +73,14 @@ func ReadSection(baseUrl string, apiKey string, apiSecret string, sectionId stri
 	return &readSectionResp, nil
 }
 
-func ListSections(baseUrl string, apiKey string, apiSecret string, channelId string) (*ListSectionsResponse, error) {
-	url := fmt.Sprintf("%s/channels/%s/sections", baseUrl, channelId)
+func (c *Client) ListSections() (*ListSectionsResponse, error) {
+	url := fmt.Sprintf("%s/channels/%s/sections", c.BaseURL, c.ChannelID)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	auth, err := getAuthorization(http.MethodGet, url, apiKey, apiSecret, "", ioutil.NopCloser(bytes.NewReader([]byte{})))
+	auth, err := c.getAuthorization(http.MethodGet, url, "", ioutil.NopCloser(bytes.NewReader([]byte{})))
 	if err != nil {
 		return nil, err
 	}
