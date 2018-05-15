@@ -11,14 +11,14 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
-const BASE_URL = "https://news-api.apple.com"
+const defaultBaseURL = "https://news-api.apple.com"
 
 var (
 	//verbose   = kingpin.Flag("verbose", "Verbose mode.").Short('v').Bool()
 	channelId = kingpin.Flag("channelId", "The ID of the channel to use").Default(os.Getenv("CHANNEL_ID")).String()
 	apiKey    = kingpin.Flag("apiKey", "The API key to use when calling the API").Default(os.Getenv("APPLE_NEWS_API_KEY")).String()
 	apiSecret = kingpin.Flag("apiSecret", "The API secret to use when calling the API").Default(os.Getenv("APPLE_NEWS_API_SECRET")).String()
-	baseUrl   = kingpin.Flag("baseUrl", "The base URL to use for API calls").Default(BASE_URL).String()
+	baseUrl   = kingpin.Flag("baseUrl", "The base URL to use for API calls").Default(defaultBaseURL).String()
 
 	readCommand = kingpin.Command("read", "Read a channel, section or article")
 	articleId   = readCommand.Command("article", "Read an article").Arg("Article ID", "The (apple) ID of the article to read").String()
