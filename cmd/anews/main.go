@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -66,51 +65,53 @@ func main() {
 	case "read article":
 		resp, err := c.ReadArticle(articleID)
 		if err != nil {
-			fmt.Println(err.Error())
+			errorAndDie(err)
 			return
 		}
-		if j, err := json.Marshal(resp); err != nil {
-			fmt.Println(err.Error())
-		} else {
-			fmt.Println(string(j))
+
+		j, err := json.Marshal(resp)
+		if err != nil {
+			errorAndDie(err)
 		}
+
+		fmt.Println(string(j))
+
 	case "read channel":
 		resp, err := c.ReadChannel(channelID)
 		if err != nil {
-			fmt.Println(err.Error())
-			os.Exit(1)
+			errorAndDie(err)
 		}
-		if j, err := json.Marshal(resp); err != nil {
-			fmt.Println(err.Error())
-			os.Exit(1)
-		} else {
-			fmt.Println(string(j))
+		j, err := json.Marshal(resp)
+		if err != nil {
+			errorAndDie(err)
 		}
+		fmt.Println(string(j))
+
 	case "read section":
 		sectionID := *sectionId
 		resp, err := c.ReadSection(sectionID)
 		if err != nil {
-			fmt.Println(err.Error())
-			os.Exit(1)
+			errorAndDie(err)
+
 		}
-		if j, err := json.Marshal(resp); err != nil {
-			fmt.Println(err.Error())
-			os.Exit(1)
-		} else {
-			fmt.Println(string(j))
+		j, err := json.Marshal(resp)
+		if err != nil {
+			errorAndDie(err)
 		}
+		fmt.Println(string(j))
+
 	case "list":
 		resp, err := c.ListSections()
 		if err != nil {
-			fmt.Println(err.Error())
-			os.Exit(1)
+			errorAndDie(err)
+
 		}
-		if j, err := json.Marshal(resp); err != nil {
-			fmt.Println(err.Error())
-			os.Exit(1)
-		} else {
-			fmt.Println(string(j))
+		j, err := json.Marshal(resp)
+		if err != nil {
+			errorAndDie(err)
 		}
+		fmt.Println(string(j))
+
 	case "search":
 		if from, err := time.Parse("2006-01-02", *searchFromDate); err == nil {
 			searchOptions.FromDate = &from
@@ -120,19 +121,18 @@ func main() {
 		}
 		resp, err := c.SearchArticles(searchOptions)
 		if err != nil {
-			fmt.Println(err.Error())
-			os.Exit(1)
+			errorAndDie(err)
 		}
-		if j, err := json.Marshal(resp); err != nil {
-			fmt.Println(err.Error())
-			os.Exit(1)
-		} else {
-			fmt.Println(string(j))
+		j, err := json.Marshal(resp)
+		if err != nil {
+			errorAndDie(err)
 		}
+		fmt.Println(string(j))
+
 	case "create":
 		f, err := os.Open(*bundlePath)
 		if err != nil {
-			log.Fatalf("%v", err)
+			errorAndDie(err)
 		}
 		defer f.Close()
 		c.CreateArticle(f, nil)
@@ -140,7 +140,7 @@ func main() {
 		if len(*updateBundlePath) > 0 {
 			f, err := os.Open(*bundlePath)
 			if err != nil {
-				log.Fatalf("%v", err)
+				errorAndDie(err)
 			}
 			defer f.Close()
 
@@ -173,4 +173,9 @@ func newSearchOptions(cmd *kingpin.CmdClause) *api.SearchArticlesOptions {
 	cmd.Flag("pageSize", "The amount of articles per page to return").IntVar(&defaultSearchOpts.PageSize)
 	cmd.Flag("sortDir", "Direction to sort by date").HintOptions(api.SORTDIR_ASC, api.SORTDIR_DESC).EnumVar(&defaultSearchOpts.SortDir, api.SORTDIR_ASC, api.SORTDIR_DESC)
 	return defaultSearchOpts
+}
+
+func errorAndDie(err error) {
+	fmt.Printf("%v", err)
+	os.Exit(1)
 }
