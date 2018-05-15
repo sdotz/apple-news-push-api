@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"net/url"
 	"bytes"
+	"github.com/pkg/errors"
+	"encoding/json"
 )
 
 type ResultPage struct {
@@ -29,6 +31,29 @@ type SearchArticlesOptions struct {
 	ToDate    *time.Time
 	PageSize  int
 	PageToken string
+}
+
+type SearchArticlesResponse struct {
+	Data []struct {
+		CreatedAt               time.Time     `json:"createdAt"`
+		ModifiedAt              time.Time     `json:"modifiedAt"`
+		ID                      string        `json:"id"`
+		Type                    string        `json:"type"`
+		ShareURL                string        `json:"shareUrl"`
+		Links                   Links         `json:"links"`
+		Revision                string        `json:"revision"`
+		State                   string        `json:"state"`
+		AccessoryText           string        `json:"accessoryText"`
+		Title                   string        `json:"title"`
+		MaturityRating          string        `json:"maturityRating"`
+		Warnings                []interface{} `json:"warnings"`
+		IsCandidateToBeFeatured bool          `json:"isCandidateToBeFeatured"`
+		IsSponsored             bool          `json:"isSponsored"`
+		IsPreview               bool          `json:"isPreview"`
+		IsDevelopingStory       bool          `json:"isDevelopingStory"`
+		IsHidden                bool          `json:"isHidden"`
+	} `json:"data"`
+	Links Links `json:"links"`
 }
 
 func DefaultSearchArticlesOptions() *SearchArticlesOptions {
@@ -55,7 +80,7 @@ func (options *SearchArticlesOptions) ApplyToQuery(query *url.Values) {
 	query.Add("pageToken", options.PageToken)
 }
 
-func SearchArticles(baseUrl string, apiKey string, apiSecret string, channelId string, options *SearchArticlesOptions) {
+func SearchArticles(baseUrl string, apiKey string, apiSecret string, channelId string, options *SearchArticlesOptions) (*SearchArticlesResponse, error) {
 	url := fmt.Sprintf("%s/channels/%s/articles", baseUrl, channelId)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
@@ -79,5 +104,18 @@ func SearchArticles(baseUrl string, apiKey string, apiSecret string, channelId s
 	defer resp.Body.Close()
 
 	body, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println(string(body))
+	if resp.StatusCode != 200 {
+		stderr.Printf("SearchArticles - %d\n", resp.StatusCode)
+		stderr.Println(string(body))
+		return nil, errors.Errorf("SearchArticles - %d", resp.StatusCode)
+	}
+
+	var searchArticlesResp SearchArticlesResponse
+	err = json.Unmarshal(body, &searchArticlesResp)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return &searchArticlesResp, nil
 }

@@ -6,6 +6,8 @@ import (
 	"time"
 	"github.com/sdotz/apple-news-push-api/pkg/api"
 	"gopkg.in/alecthomas/kingpin.v2"
+	"fmt"
+	"encoding/json"
 )
 
 const BASE_URL = "https://news-api.apple.com"
@@ -52,13 +54,52 @@ func main() {
 
 	switch command {
 	case "read article":
-		api.ReadArticle(*baseUrl, *apiKey, *apiSecret, *articleId)
+		resp, err := api.ReadArticle(*baseUrl, *apiKey, *apiSecret, *articleId)
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+		if j, err := json.Marshal(resp); err != nil {
+			fmt.Println(err.Error())
+		} else {
+			fmt.Println(string(j))
+		}
 	case "read channel":
-		api.ReadChannel(*baseUrl, *apiKey, *apiSecret, *channelId)
+		resp, err := api.ReadChannel(*baseUrl, *apiKey, *apiSecret, *channelId)
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+		if j, err := json.Marshal(resp); err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		} else {
+			fmt.Println(string(j))
+		}
 	case "read section":
-		api.ReadSection(*baseUrl, *apiKey, *apiSecret, *sectionId)
+		resp, err := api.ReadSection(*baseUrl, *apiKey, *apiSecret, *sectionId)
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+		if j, err := json.Marshal(resp); err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		} else {
+			fmt.Println(string(j))
+		}
 	case "list":
-		api.ListSections(*baseUrl, *apiKey, *apiSecret, *channelId)
+		resp, err := api.ListSections(*baseUrl, *apiKey, *apiSecret, *channelId)
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+		if j, err := json.Marshal(resp); err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		} else {
+			fmt.Println(string(j))
+		}
 	case "search":
 		if from, err := time.Parse("2006-01-02", *searchFromDate); err == nil {
 			searchOptions.FromDate = &from
@@ -66,7 +107,17 @@ func main() {
 		if to, err := time.Parse("2006-01-02", *searchToDate); err == nil {
 			searchOptions.ToDate = &to
 		}
-		api.SearchArticles(*baseUrl, *apiKey, *apiSecret, *channelId, searchOptions)
+		resp, err := api.SearchArticles(*baseUrl, *apiKey, *apiSecret, *channelId, searchOptions)
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+		if j, err := json.Marshal(resp); err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		} else {
+			fmt.Println(string(j))
+		}
 	case "create":
 		f, err := os.Open(*bundlePath)
 		if err != nil {

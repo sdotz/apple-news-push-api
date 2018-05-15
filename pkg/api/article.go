@@ -11,6 +11,8 @@ import (
 	"net/textproto"
 	"log"
 	"encoding/json"
+	"time"
+	"github.com/pkg/errors"
 )
 
 type ContentType string
@@ -54,6 +56,63 @@ type PromoteArticlesRequest struct {
 	Data struct {
 		PromotedArticles []string `json:"promotedArticles"`
 	} `json:"data"`
+}
+
+type ReadArticleResponse struct {
+	Data struct {
+		CreatedAt               time.Time     `json:"createdAt"`
+		ModifiedAt              time.Time     `json:"modifiedAt"`
+		ID                      string        `json:"id"`
+		Type                    string        `json:"type"`
+		ShareURL                string        `json:"shareUrl"`
+		Links                   Links         `json:"links"`
+		Document                interface{}   `json:"document"`
+		Revision                string        `json:"revision"`
+		State                   string        `json:"state"`
+		AccessoryText           string        `json:"accessoryText"`
+		Title                   string        `json:"title"`
+		MaturityRating          string        `json:"maturityRating"`
+		Warnings                []interface{} `json:"warnings"`
+		IsCandidateToBeFeatured bool          `json:"isCandidateToBeFeatured"`
+		IsSponsored             bool          `json:"isSponsored"`
+		IsPreview               bool          `json:"isPreview"`
+		IsDevelopingStory       bool          `json:"isDevelopingStory"`
+		IsHidden                bool          `json:"isHidden"`
+	} `json:"data"`
+}
+
+func ReadArticle(baseUrl string, apiKey string, apiSecret string, articleId string) (*ReadArticleResponse, error) {
+	url := fmt.Sprintf("%s/articles/%s", baseUrl, articleId)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	req.Header.Set("Authorization", getAuthorization(http.MethodGet, url, apiKey, apiSecret, "", ioutil.NopCloser(bytes.NewReader([]byte{}))))
+
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := ioutil.ReadAll(resp.Body)
+
+	if resp.StatusCode != 200 {
+		stderr.Printf("ReadArticle - %d\n", resp.StatusCode)
+		stderr.Println(string(body))
+		return nil, errors.Errorf("ReadArticle - %d", resp.StatusCode)
+	}
+
+	var readArticleResp ReadArticleResponse
+	err = json.Unmarshal(body, &readArticleResp)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return &readArticleResp, nil
 }
 
 func CreateArticle(baseUrl string, apiKey string, apiSecret string, channelId string, article io.Reader, metadata *Metadata) {
