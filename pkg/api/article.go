@@ -1,17 +1,17 @@
 package api
 
 import (
-	"fmt"
-	"net/http"
-	"io/ioutil"
 	"bytes"
-	"mime/multipart"
-	"io"
-	"strings"
-	"net/textproto"
-	"log"
 	"encoding/json"
+	"fmt"
+	"io"
+	"io/ioutil"
+	"mime/multipart"
+	"net/http"
+	"net/textproto"
+	"strings"
 	"time"
+
 	"github.com/pkg/errors"
 )
 
@@ -85,15 +85,20 @@ func ReadArticle(baseUrl string, apiKey string, apiSecret string, articleId stri
 	url := fmt.Sprintf("%s/articles/%s", baseUrl, articleId)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
-	req.Header.Set("Authorization", getAuthorization(http.MethodGet, url, apiKey, apiSecret, "", ioutil.NopCloser(bytes.NewReader([]byte{}))))
+
+	auth, err := getAuthorization(http.MethodGet, url, apiKey, apiSecret, "", ioutil.NopCloser(bytes.NewReader([]byte{})))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", auth)
 
 	client := &http.Client{}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	defer resp.Body.Close()
 
@@ -109,13 +114,13 @@ func ReadArticle(baseUrl string, apiKey string, apiSecret string, articleId stri
 	err = json.Unmarshal(body, &readArticleResp)
 
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	return &readArticleResp, nil
 }
 
-func CreateArticle(baseUrl string, apiKey string, apiSecret string, channelId string, article io.Reader, metadata *Metadata) {
+func CreateArticle(baseUrl string, apiKey string, apiSecret string, channelId string, article io.Reader, metadata *Metadata) error {
 
 	url := fmt.Sprintf("%s/channels/%s/articles", baseUrl, channelId)
 
@@ -134,25 +139,27 @@ func CreateArticle(baseUrl string, apiKey string, apiSecret string, channelId st
 	)
 
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	client := &http.Client{}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer resp.Body.Close()
 
-	body, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println(string(body))
+	return resp.Body.Close()
 }
 
-func UpdateArticle(baseUrl string, apiKey string, apiSecret string, articleId string, article io.Reader, metadata *Metadata) {
+func UpdateArticle(baseUrl string, apiKey string, apiSecret string, articleId string, article io.Reader, metadata *Metadata) error {
 	url := fmt.Sprintf("%s/articles/%s", baseUrl, articleId)
 
 	metadataBytes, err := json.Marshal(metadata)
+	if err != nil {
+		return err
+	}
 
 	parts := []MultipartUploadComponent{
 		{
@@ -176,25 +183,27 @@ func UpdateArticle(baseUrl string, apiKey string, apiSecret string, articleId st
 	)
 
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	client := &http.Client{}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer resp.Body.Close()
 
-	body, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println(string(body))
+	return resp.Body.Close()
 }
 
-func UpdateArticleMetadata(baseUrl string, apiKey string, apiSecret string, articleId string, metadata *Metadata) {
+func UpdateArticleMetadata(baseUrl string, apiKey string, apiSecret string, articleId string, metadata *Metadata) error {
 	url := fmt.Sprintf("%s/articles/%s", baseUrl, articleId)
 
 	metadataBytes, err := json.Marshal(metadata)
+	if err != nil {
+		return err
+	}
 
 	req, err := prepareMultipartRequest(
 		[]MultipartUploadComponent{
@@ -210,22 +219,21 @@ func UpdateArticleMetadata(baseUrl string, apiKey string, apiSecret string, arti
 	)
 
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	client := &http.Client{}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer resp.Body.Close()
 
-	body, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println(string(body))
+	return resp.Body.Close()
 }
 
-func PromoteArticles(baseUrl string, apiKey string, apiSecret string, sectionId string, articleIds []string) {
+func PromoteArticles(baseUrl string, apiKey string, apiSecret string, sectionId string, articleIds []string) error {
 	url := fmt.Sprintf("%s/sections/%s/promotedArticles", baseUrl, sectionId)
 
 	promotedArticles := PromoteArticlesRequest{}
@@ -236,43 +244,49 @@ func PromoteArticles(baseUrl string, apiKey string, apiSecret string, sectionId 
 
 	bodyBytes, err := json.Marshal(promotedArticles)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(bodyBytes))
 
-	req.Header.Set("Authorization", getAuthorization(http.MethodPost, url, apiKey, apiSecret, "", ioutil.NopCloser(bytes.NewReader(bodyBytes))))
+	auth, err := getAuthorization(http.MethodPost, url, apiKey, apiSecret, "", ioutil.NopCloser(bytes.NewReader([]byte{})))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Authorization", auth)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer resp.Body.Close()
 
-	body, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println(string(body))
+	return resp.Body.Close()
 }
 
-func DeleteArticle(baseUrl string, apiKey string, apiSecret string, articleId string) {
+func DeleteArticle(baseUrl string, apiKey string, apiSecret string, articleId string) error {
 	url := fmt.Sprintf("%s/articles/%s", baseUrl, articleId)
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
-	req.Header.Set("Authorization", getAuthorization(http.MethodDelete, url, apiKey, apiSecret, "", ioutil.NopCloser(bytes.NewReader([]byte{}))))
+	auth, err := getAuthorization(http.MethodDelete, url, apiKey, apiSecret, "", ioutil.NopCloser(bytes.NewReader([]byte{})))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Authorization", auth)
 
 	client := &http.Client{}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer resp.Body.Close()
 
-	body, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println(string(body))
+	return resp.Body.Close()
 }
 
 func prepareMultipartRequest(parts []MultipartUploadComponent, url string, apiKey string, apiSecret string) (*http.Request, error) {
@@ -297,14 +311,22 @@ func prepareMultipartRequest(parts []MultipartUploadComponent, url string, apiKe
 		}
 	}
 
-	writer.Close()
+	err := writer.Close()
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest(http.MethodPost, url, body)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("Content-Type", writer.FormDataContentType())
-	req.Header.Set("Authorization", getAuthorization(http.MethodPost, url, apiKey, apiSecret, writer.FormDataContentType(), ioutil.NopCloser(bytes.NewReader(body.Bytes()))))
+
+	auth, err := getAuthorization(http.MethodPost, url, apiKey, apiSecret, writer.FormDataContentType(), ioutil.NopCloser(bytes.NewReader(body.Bytes())))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", auth)
 
 	return req, err
 }

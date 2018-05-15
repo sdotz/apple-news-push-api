@@ -1,16 +1,17 @@
 package api
 
 import (
-	"net/http"
-	"fmt"
-	"log"
-	"io/ioutil"
-	"time"
-	"strconv"
-	"net/url"
 	"bytes"
-	"github.com/pkg/errors"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"net/url"
+	"strconv"
+	"time"
+
+	"github.com/pkg/errors"
 )
 
 type ResultPage struct {
@@ -93,7 +94,11 @@ func SearchArticles(baseUrl string, apiKey string, apiSecret string, channelId s
 
 	req.URL.RawQuery = query.Encode()
 
-	req.Header.Set("Authorization", getAuthorization(http.MethodGet, req.URL.String(), apiKey, apiSecret, "", ioutil.NopCloser(bytes.NewReader([]byte{}))))
+	auth, err := getAuthorization(http.MethodGet, req.URL.String(), apiKey, apiSecret, "", ioutil.NopCloser(bytes.NewReader([]byte{})))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", auth)
 
 	client := &http.Client{}
 
@@ -105,17 +110,11 @@ func SearchArticles(baseUrl string, apiKey string, apiSecret string, channelId s
 
 	body, _ := ioutil.ReadAll(resp.Body)
 	if resp.StatusCode != 200 {
-		stderr.Printf("SearchArticles - %d\n", resp.StatusCode)
-		stderr.Println(string(body))
 		return nil, errors.Errorf("SearchArticles - %d", resp.StatusCode)
 	}
 
 	var searchArticlesResp SearchArticlesResponse
 	err = json.Unmarshal(body, &searchArticlesResp)
 
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return &searchArticlesResp, nil
+	return &searchArticlesResp, err
 }

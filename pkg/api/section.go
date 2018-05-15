@@ -1,14 +1,14 @@
 package api
 
 import (
-	"time"
-	"fmt"
-	"net/http"
-	"io/ioutil"
 	"bytes"
-	"log"
-	"github.com/pkg/errors"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"time"
+
+	"github.com/pkg/errors"
 )
 
 type ReadSectionResponse struct {
@@ -41,22 +41,25 @@ func ReadSection(baseUrl string, apiKey string, apiSecret string, sectionId stri
 	url := fmt.Sprintf("%s/sections/%s", baseUrl, sectionId)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
-	req.Header.Set("Authorization", getAuthorization(http.MethodGet, url, apiKey, apiSecret, "", ioutil.NopCloser(bytes.NewReader([]byte{}))))
+
+	auth, err := getAuthorization(http.MethodGet, url, apiKey, apiSecret, "", ioutil.NopCloser(bytes.NewReader([]byte{})))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", auth)
 
 	client := &http.Client{}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	body, _ := ioutil.ReadAll(resp.Body)
 	if resp.StatusCode != 200 {
-		stderr.Printf("ReadSection - %d\n", resp.StatusCode)
-		stderr.Println(string(body))
 		return nil, errors.Errorf("ReadSection - %d", resp.StatusCode)
 	}
 
@@ -64,7 +67,7 @@ func ReadSection(baseUrl string, apiKey string, apiSecret string, sectionId stri
 	err = json.Unmarshal(body, &readSectionResp)
 
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	return &readSectionResp, nil
@@ -74,32 +77,31 @@ func ListSections(baseUrl string, apiKey string, apiSecret string, channelId str
 	url := fmt.Sprintf("%s/channels/%s/sections", baseUrl, channelId)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
-	req.Header.Set("Authorization", getAuthorization(http.MethodGet, url, apiKey, apiSecret, "", ioutil.NopCloser(bytes.NewReader([]byte{}))))
+
+	auth, err := getAuthorization(http.MethodGet, url, apiKey, apiSecret, "", ioutil.NopCloser(bytes.NewReader([]byte{})))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", auth)
 
 	client := &http.Client{}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	body, _ := ioutil.ReadAll(resp.Body)
 	if resp.StatusCode != 200 {
-		stderr.Printf("ListSections - %d\n", resp.StatusCode)
-		stderr.Println(string(body))
 		return nil, errors.Errorf("ListSections - %d", resp.StatusCode)
 	}
 
 	var listSectionsResp ListSectionsResponse
 	err = json.Unmarshal(body, &listSectionsResp)
 
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return &listSectionsResp, nil
+	return &listSectionsResp, err
 
 }
