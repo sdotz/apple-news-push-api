@@ -122,8 +122,6 @@ func (c *Client) ReadArticle(articleId string) (*ReadArticleResponse, error) {
 	body, _ := ioutil.ReadAll(resp.Body)
 
 	if resp.StatusCode != 200 {
-		stderr.Printf("ReadArticle - %d\n", resp.StatusCode)
-		stderr.Println(string(body))
 		return nil, errors.Errorf("ReadArticle - %d", resp.StatusCode)
 	}
 
