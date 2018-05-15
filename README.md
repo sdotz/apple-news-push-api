@@ -26,7 +26,7 @@ I think the promoteArticles API might be broken when sending an empty array. Doc
 
 Install and use as a command line tool:
 
-`go install github.com/sdotz/apple-news-push-api/cmd/pushapi`
+`go install github.com/sdotz/apple-news-push-api/cmd/anews`
 
 Set the envoriment variables `APPLE_NEWS_API_KEY`, `APPLE_NEWS_API_SECRET`, `CHANNEL_ID`
 
