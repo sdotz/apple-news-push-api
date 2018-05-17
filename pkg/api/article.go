@@ -122,7 +122,7 @@ func (c *Client) ReadArticle(articleId string) (*ReadArticleResponse, error) {
 	body, _ := ioutil.ReadAll(resp.Body)
 
 	if resp.StatusCode != 200 {
-		return nil, errors.Errorf("ReadArticle - %d", resp.StatusCode)
+		return nil, errors.Errorf("%s returned a %d", url, resp.StatusCode)
 	}
 
 	var readArticleResp ReadArticleResponse
@@ -135,7 +135,7 @@ func (c *Client) ReadArticle(articleId string) (*ReadArticleResponse, error) {
 	return &readArticleResp, nil
 }
 
-func (c *Client) CreateArticle(article io.Reader, metadata *Metadata) error {
+func (c *Client) CreateArticle(article io.Reader, metadata *Metadata) (*ReadArticleResponse, error) {
 	url := fmt.Sprintf("%s/channels/%s/articles", c.BaseURL, c.ChannelID)
 
 	req, err := c.prepareMultipartRequest(
@@ -151,24 +151,39 @@ func (c *Client) CreateArticle(article io.Reader, metadata *Metadata) error {
 	)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	resp, err := c.Client.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
-	return resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode != 200 {
+		return nil, errors.Errorf("%s returned a %d", url, resp.StatusCode)
+	}
+
+	var readArticleResp ReadArticleResponse
+	err = json.Unmarshal(body, &readArticleResp)
+	if err != nil {
+		return nil, err
+	}
+
+	return &readArticleResp, resp.Body.Close()
 }
 
-func (c *Client) UpdateArticle(articleId string, article io.Reader, metadata *Metadata) error {
+func (c *Client) UpdateArticle(articleId string, article io.Reader, metadata *Metadata) (*ReadArticleResponse, error) {
 	url := fmt.Sprintf("%s/articles/%s", c.BaseURL, articleId)
 
 	metadataBytes, err := json.Marshal(metadata)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	parts := []MultipartUploadComponent{
@@ -191,16 +206,31 @@ func (c *Client) UpdateArticle(articleId string, article io.Reader, metadata *Me
 	)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	resp, err := c.Client.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
-	return resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode != 200 {
+		return nil, errors.Errorf("%s returned a %d", url, resp.StatusCode)
+	}
+
+	var readArticleResp ReadArticleResponse
+	err = json.Unmarshal(body, &readArticleResp)
+	if err != nil {
+		return nil, err
+	}
+
+	return &readArticleResp, resp.Body.Close()
 }
 
 func (c *Client) UpdateArticleMetadata(articleId string, metadata *Metadata) error {
