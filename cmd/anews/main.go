@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/apple-news-push-api/pkg/api"
+	"github.com/sdotz/apple-news-push-api/pkg/api"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
