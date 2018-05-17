@@ -166,7 +166,7 @@ func (c *Client) CreateArticle(article io.Reader, metadata *Metadata) (*ReadArti
 	}
 
 	if resp.StatusCode != http.StatusCreated {
-		return nil, errors.Errorf("%s returned a %d", url, resp.StatusCode)
+		return nil, errors.Errorf("%s returned a %d . reason: ", url, resp.StatusCode, string(body))
 	}
 
 	var readArticleResp ReadArticleResponse
@@ -221,7 +221,7 @@ func (c *Client) UpdateArticle(articleId string, article io.Reader, metadata *Me
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.Errorf("%s returned a %d", url, resp.StatusCode)
+		return nil, errors.Errorf("%s returned a %d . reason: ", url, resp.StatusCode, string(body))
 	}
 
 	var readArticleResp ReadArticleResponse
@@ -261,6 +261,15 @@ func (c *Client) UpdateArticleMetadata(articleId string, metadata *Metadata) err
 		return err
 	}
 	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return errors.Errorf("%s returned a %d . reason: ", url, resp.StatusCode, string(body))
+	}
 
 	return resp.Body.Close()
 }
