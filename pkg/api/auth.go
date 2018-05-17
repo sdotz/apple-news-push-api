@@ -10,10 +10,10 @@ import (
 )
 
 //Builds the Authorization header according to the spec defined here: https://developer.apple.com/library/content/documentation/General/Conceptual/News_API_Ref/Security.html#//apple_ref/doc/uid/TP40015409-CH5-SW1
-func getAuthorization(httpMethod string, url string, apiKey string, apiSecret string, contentType string, body io.ReadCloser) (string, error) {
+func (c *Client) getAuthorization(httpMethod string, url string, contentType string, body io.ReadCloser) (string, error) {
 	defer body.Close()
 	timeNow := time.Now().UTC().Format(time.RFC3339)
-	apiSecretDecoded, err := base64.StdEncoding.DecodeString(apiSecret)
+	apiSecretDecoded, err := base64.StdEncoding.DecodeString(c.APISecret)
 	if err != nil {
 		return "", err
 	}
@@ -31,5 +31,5 @@ func getAuthorization(httpMethod string, url string, apiKey string, apiSecret st
 
 	signature := base64.StdEncoding.EncodeToString(mac.Sum(nil))
 
-	return fmt.Sprintf("HHMAC; key=%s; signature=%s; date=%s", apiKey, signature, timeNow), nil
+	return fmt.Sprintf("HHMAC; key=%s; signature=%s; date=%s", c.APIKey, signature, timeNow), nil
 }

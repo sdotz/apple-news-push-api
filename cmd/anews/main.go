@@ -1,23 +1,24 @@
 package main
 
 import (
-	"os"
-	"log"
-	"time"
-	"github.com/sdotz/apple-news-push-api/pkg/api"
-	"gopkg.in/alecthomas/kingpin.v2"
-	"fmt"
 	"encoding/json"
+	"fmt"
+	"net/http"
+	"os"
+	"time"
+
+	"github.com/apple-news-push-api/pkg/api"
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
-const BASE_URL = "https://news-api.apple.com"
+const defaultBaseURL = "https://news-api.apple.com"
 
 var (
 	//verbose   = kingpin.Flag("verbose", "Verbose mode.").Short('v').Bool()
 	channelId = kingpin.Flag("channelId", "The ID of the channel to use").Default(os.Getenv("CHANNEL_ID")).String()
 	apiKey    = kingpin.Flag("apiKey", "The API key to use when calling the API").Default(os.Getenv("APPLE_NEWS_API_KEY")).String()
 	apiSecret = kingpin.Flag("apiSecret", "The API secret to use when calling the API").Default(os.Getenv("APPLE_NEWS_API_SECRET")).String()
-	baseUrl   = kingpin.Flag("baseUrl", "The base URL to use for API calls").Default(BASE_URL).String()
+	baseUrl   = kingpin.Flag("baseUrl", "The base URL to use for API calls").Default(defaultBaseURL).String()
 
 	readCommand = kingpin.Command("read", "Read a channel, section or article")
 	articleId   = readCommand.Command("article", "Read an article").Arg("Article ID", "The (apple) ID of the article to read").String()
@@ -52,54 +53,64 @@ var (
 func main() {
 	command := kingpin.Parse()
 
+	channelID := *channelId
+	key := *apiKey
+	secret := *apiSecret
+	baseURL := *baseUrl
+	articleID := *articleId
+
+	c := api.NewClient(&http.Client{}, baseURL, key, secret, channelID)
+
 	switch command {
 	case "read article":
-		resp, err := api.ReadArticle(*baseUrl, *apiKey, *apiSecret, *articleId)
+		resp, err := c.ReadArticle(articleID)
 		if err != nil {
-			fmt.Println(err.Error())
-			return
+			errorAndDie(err)
 		}
-		if j, err := json.Marshal(resp); err != nil {
-			fmt.Println(err.Error())
-		} else {
-			fmt.Println(string(j))
+
+		j, err := json.Marshal(resp)
+		if err != nil {
+			errorAndDie(err)
 		}
+
+		fmt.Println(string(j))
+
 	case "read channel":
-		resp, err := api.ReadChannel(*baseUrl, *apiKey, *apiSecret, *channelId)
+		resp, err := c.ReadChannel(channelID)
 		if err != nil {
-			fmt.Println(err.Error())
-			os.Exit(1)
+			errorAndDie(err)
 		}
-		if j, err := json.Marshal(resp); err != nil {
-			fmt.Println(err.Error())
-			os.Exit(1)
-		} else {
-			fmt.Println(string(j))
+		j, err := json.Marshal(resp)
+		if err != nil {
+			errorAndDie(err)
 		}
+		fmt.Println(string(j))
+
 	case "read section":
-		resp, err := api.ReadSection(*baseUrl, *apiKey, *apiSecret, *sectionId)
+		sectionID := *sectionId
+		resp, err := c.ReadSection(sectionID)
 		if err != nil {
-			fmt.Println(err.Error())
-			os.Exit(1)
+			errorAndDie(err)
+
 		}
-		if j, err := json.Marshal(resp); err != nil {
-			fmt.Println(err.Error())
-			os.Exit(1)
-		} else {
-			fmt.Println(string(j))
+		j, err := json.Marshal(resp)
+		if err != nil {
+			errorAndDie(err)
 		}
+		fmt.Println(string(j))
+
 	case "list":
-		resp, err := api.ListSections(*baseUrl, *apiKey, *apiSecret, *channelId)
+		resp, err := c.ListSections()
 		if err != nil {
-			fmt.Println(err.Error())
-			os.Exit(1)
+			errorAndDie(err)
+
 		}
-		if j, err := json.Marshal(resp); err != nil {
-			fmt.Println(err.Error())
-			os.Exit(1)
-		} else {
-			fmt.Println(string(j))
+		j, err := json.Marshal(resp)
+		if err != nil {
+			errorAndDie(err)
 		}
+		fmt.Println(string(j))
+
 	case "search":
 		if from, err := time.Parse("2006-01-02", *searchFromDate); err == nil {
 			searchOptions.FromDate = &from
@@ -107,40 +118,39 @@ func main() {
 		if to, err := time.Parse("2006-01-02", *searchToDate); err == nil {
 			searchOptions.ToDate = &to
 		}
-		resp, err := api.SearchArticles(*baseUrl, *apiKey, *apiSecret, *channelId, searchOptions)
+		resp, err := c.SearchArticles(searchOptions)
 		if err != nil {
-			fmt.Println(err.Error())
-			os.Exit(1)
+			errorAndDie(err)
 		}
-		if j, err := json.Marshal(resp); err != nil {
-			fmt.Println(err.Error())
-			os.Exit(1)
-		} else {
-			fmt.Println(string(j))
+		j, err := json.Marshal(resp)
+		if err != nil {
+			errorAndDie(err)
 		}
+		fmt.Println(string(j))
+
 	case "create":
 		f, err := os.Open(*bundlePath)
 		if err != nil {
-			log.Fatal(err.Error())
+			errorAndDie(err)
 		}
 		defer f.Close()
-		api.CreateArticle(*baseUrl, *apiKey, *apiSecret, *channelId, f, nil)
+		c.CreateArticle(f, nil)
 	case "update":
 		if len(*updateBundlePath) > 0 {
 			f, err := os.Open(*bundlePath)
 			if err != nil {
-				log.Fatal(err.Error())
+				errorAndDie(err)
 			}
 			defer f.Close()
 
-			api.UpdateArticle(*baseUrl, *apiKey, *apiSecret, *articleId, f, updateOptions)
+			c.UpdateArticle(articleID, f, updateOptions)
 		} else {
-			api.UpdateArticleMetadata(*baseUrl, *apiKey, *apiSecret, *articleId, updateOptions)
+			c.UpdateArticleMetadata(articleID, updateOptions)
 		}
 	case "promote":
-		api.PromoteArticles(*baseUrl, *apiKey, *apiSecret, *promoteSectionId, *promoteArticleIds)
+		c.PromoteArticles(*promoteSectionId, *promoteArticleIds)
 	case "delete":
-		api.DeleteArticle(*baseUrl, *apiKey, *apiSecret, *deleteArticleId)
+		c.DeleteArticle(*deleteArticleId)
 	}
 
 }
@@ -162,4 +172,9 @@ func newSearchOptions(cmd *kingpin.CmdClause) *api.SearchArticlesOptions {
 	cmd.Flag("pageSize", "The amount of articles per page to return").IntVar(&defaultSearchOpts.PageSize)
 	cmd.Flag("sortDir", "Direction to sort by date").HintOptions(api.SORTDIR_ASC, api.SORTDIR_DESC).EnumVar(&defaultSearchOpts.SortDir, api.SORTDIR_ASC, api.SORTDIR_DESC)
 	return defaultSearchOpts
+}
+
+func errorAndDie(err error) {
+	fmt.Printf("%v", err)
+	os.Exit(1)
 }

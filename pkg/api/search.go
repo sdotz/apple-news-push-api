@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -81,11 +80,11 @@ func (options *SearchArticlesOptions) ApplyToQuery(query *url.Values) {
 	query.Add("pageToken", options.PageToken)
 }
 
-func SearchArticles(baseUrl string, apiKey string, apiSecret string, channelId string, options *SearchArticlesOptions) (*SearchArticlesResponse, error) {
-	url := fmt.Sprintf("%s/channels/%s/articles", baseUrl, channelId)
+func (c *Client) SearchArticles(options *SearchArticlesOptions) (*SearchArticlesResponse, error) {
+	url := fmt.Sprintf("%s/channels/%s/articles", c.BaseURL, c.ChannelID)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	query := req.URL.Query()
@@ -94,7 +93,7 @@ func SearchArticles(baseUrl string, apiKey string, apiSecret string, channelId s
 
 	req.URL.RawQuery = query.Encode()
 
-	auth, err := getAuthorization(http.MethodGet, req.URL.String(), apiKey, apiSecret, "", ioutil.NopCloser(bytes.NewReader([]byte{})))
+	auth, err := c.getAuthorization(http.MethodGet, req.URL.String(), "", ioutil.NopCloser(bytes.NewReader([]byte{})))
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +103,7 @@ func SearchArticles(baseUrl string, apiKey string, apiSecret string, channelId s
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	defer resp.Body.Close()
 

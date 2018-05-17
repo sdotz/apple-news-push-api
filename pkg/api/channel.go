@@ -24,14 +24,14 @@ type ReadChannelResponse struct {
 	} `json:"data"`
 }
 
-func ReadChannel(baseUrl string, apiKey string, apiSecret string, channelId string) (*ReadChannelResponse, error) {
-	url := fmt.Sprintf("%s/channels/%s", baseUrl, channelId)
+func (c *Client) ReadChannel(channelId string) (*ReadChannelResponse, error) {
+	url := fmt.Sprintf("%s/channels/%s", c.BaseURL, channelId)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	auth, err := getAuthorization(http.MethodGet, url, apiKey, apiSecret, "", ioutil.NopCloser(bytes.NewReader([]byte{})))
+	auth, err := c.getAuthorization(http.MethodGet, url, "", ioutil.NopCloser(bytes.NewReader([]byte{})))
 	if err != nil {
 		return nil, err
 	}
