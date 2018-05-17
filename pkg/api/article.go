@@ -121,7 +121,7 @@ func (c *Client) ReadArticle(articleId string) (*ReadArticleResponse, error) {
 
 	body, _ := ioutil.ReadAll(resp.Body)
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		return nil, errors.Errorf("%s returned a %d", url, resp.StatusCode)
 	}
 
@@ -165,7 +165,7 @@ func (c *Client) CreateArticle(article io.Reader, metadata *Metadata) (*ReadArti
 		return nil, err
 	}
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusCreated {
 		return nil, errors.Errorf("%s returned a %d", url, resp.StatusCode)
 	}
 
@@ -220,7 +220,7 @@ func (c *Client) UpdateArticle(articleId string, article io.Reader, metadata *Me
 		return nil, err
 	}
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		return nil, errors.Errorf("%s returned a %d", url, resp.StatusCode)
 	}
 
