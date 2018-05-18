@@ -8,7 +8,7 @@ The library aims to be complete and easy to use both as tool for interacting wit
 
 - [X] Implement all API methods and options
 - [X] CLI
-- [ ] Refactor all API methods to return response objects and move JSON printing out to CLI land
+- [] Refactor all API methods to return response objects and move JSON printing out to CLI land
 - [ ] Scan article.json for bundle:// URLs, find those files in the bundle, and add to multipart upload
 - [ ] Make CLI friendly with validations and meaningful errors
 - [ ] Add tests

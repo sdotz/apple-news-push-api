@@ -13,6 +13,10 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"regexp"
+	"github.com/prometheus/common/log"
+	"os"
+	"path/filepath"
 )
 
 type ContentType string
@@ -94,14 +98,10 @@ type ReadArticleResponse struct {
 	} `json:"data"`
 }
 
-func NewClient(httpClient *http.Client, key, secret, url, channelID string) *Client {
-	return &Client{
-		Client:    httpClient,
-		APIKey:    key,
-		APISecret: secret,
-		BaseURL:   url,
-		ChannelID: channelID,
-	}
+type BundleComponent struct {
+	Data io.Reader
+	Name string
+	Ext  string
 }
 
 func (c *Client) ReadArticle(articleId string) (*ReadArticleResponse, error) {
@@ -139,18 +139,70 @@ func (c *Client) ReadArticle(articleId string) (*ReadArticleResponse, error) {
 	return &readArticleResp, nil
 }
 
-func (c *Client) CreateArticle(article io.Reader, metadata *Metadata) (*ReadArticleResponse, error) {
+func GetBundleComponents(articleJson io.Reader, bundleBasePath string) ([]MultipartUploadComponent, error) {
+	var matches [][]string
+	var bundleComponents []MultipartUploadComponent
+
+	re := regexp.MustCompile(`"bundle:\/\/(.*?)"`)
+
+	articleBytes, err := ioutil.ReadAll(articleJson)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	matches = re.FindAllStringSubmatch(string(articleBytes), -1)
+
+	if len(matches) > 0 {
+		for _, v := range matches {
+			bundleFile, err := os.Open(filepath.Join(bundleBasePath, v[1]))
+			if err != nil {
+				return nil, err
+			}
+
+			contentType, err := getContentType(filepath.Ext(bundleFile.Name()))
+			if err != nil {
+				return bundleComponents, err
+			}
+
+			component := MultipartUploadComponent{
+				Data:        bundleFile,
+				Name:        strings.Split(filepath.Base(bundleFile.Name()), ".")[0],
+				FileName:    filepath.Base(bundleFile.Name()),
+				ContentType: contentType,
+			}
+			bundleComponents = append(bundleComponents, component)
+		}
+	}
+
+	return bundleComponents, nil
+}
+
+func (c *Client) CreateArticle(article io.Reader, bundleComponents []MultipartUploadComponent, metadata *Metadata) (*ReadArticleResponse, error) {
 	url := fmt.Sprintf("%s/channels/%s/articles", c.BaseURL, c.ChannelID)
 
-	req, err := c.prepareMultipartRequest(
-		[]MultipartUploadComponent{
-			{
-				Data:        article,
-				Name:        "article.json",
-				FileName:    "article.json",
-				ContentType: ContentTypeJson,
-			},
+	metadataBytes, err := json.Marshal(metadata)
+	if err != nil {
+		return nil, err
+	}
+
+	multipartComponents := []MultipartUploadComponent{
+		{
+			Data:        bytes.NewReader(metadataBytes),
+			Name:        "metadata",
+			ContentType: ContentTypeJson,
 		},
+		{
+			Data:        article,
+			Name:        "article.json",
+			FileName:    "article.json",
+			ContentType: ContentTypeJson,
+		},
+	}
+
+	multipartComponents = append(multipartComponents, bundleComponents...)
+
+	req, err := c.prepareMultipartRequest(
+		multipartComponents,
 		url,
 	)
 
@@ -170,7 +222,8 @@ func (c *Client) CreateArticle(article io.Reader, metadata *Metadata) (*ReadArti
 	}
 
 	if resp.StatusCode != http.StatusCreated {
-		return nil, errors.Errorf("%s returned a %d . reason: ", url, resp.StatusCode, string(body))
+		fmt.Println(string(metadataBytes))
+		return nil, errors.Errorf("%s returned a %d . reason: %s", url, resp.StatusCode, string(body))
 	}
 
 	var readArticleResp ReadArticleResponse
@@ -264,7 +317,6 @@ func (c *Client) UpdateArticleMetadata(articleId string, metadata *Metadata) err
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -304,7 +356,6 @@ func (c *Client) PromoteArticles(sectionId string, articleIds []string) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
 
 	return resp.Body.Close()
 }
@@ -326,7 +377,6 @@ func (c *Client) DeleteArticle(articleId string) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
 
 	return resp.Body.Close()
 }
@@ -343,11 +393,16 @@ func (c *Client) prepareMultipartRequest(parts []MultipartUploadComponent, url s
 		}
 		h.Set("Content-Disposition", contentDispositionHeader)
 		h.Set("Content-Type", string(v.ContentType))
+		partBytes, err := ioutil.ReadAll(v.Data)
+		if err != nil {
+			return nil, err
+		}
+		h.Set("Content-Length", fmt.Sprintf("%d", len(partBytes)))
 		part, err := writer.CreatePart(h)
 		if err != nil {
 			return nil, err
 		}
-		_, err = io.Copy(part, v.Data)
+		_, err = part.Write(partBytes)
 		if err != nil {
 			return nil, err
 		}
@@ -371,6 +426,19 @@ func (c *Client) prepareMultipartRequest(parts []MultipartUploadComponent, url s
 	req.Header.Set("Authorization", auth)
 
 	return req, err
+}
+
+func getContentType(extension string) (ContentType, error) {
+	switch strings.ToLower(extension) {
+	case ".jpg", ".jpeg":
+		return ContentTypeJpeg, nil
+	case ".png":
+		return ContentTypePng, nil
+	case ".gif":
+		return ContentTypeGif, nil
+	default:
+		return "", errors.New(fmt.Sprintf("Could not match extension %s to a valid content type", extension))
+	}
 }
 
 var quoteEscaper = strings.NewReplacer("\\", "\\\\", `"`, "\\\"")

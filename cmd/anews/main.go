@@ -9,6 +9,9 @@ import (
 
 	"github.com/sdotz/apple-news-push-api/pkg/api"
 	"gopkg.in/alecthomas/kingpin.v2"
+	"path/filepath"
+	"io/ioutil"
+	"bytes"
 )
 
 const defaultBaseURL = "https://news-api.apple.com"
@@ -33,7 +36,7 @@ var (
 	searchToDate   = searchCommand.Flag("toDate", "End paging at this date (formatted like 2006-01-02)").String()
 
 	createCommand = kingpin.Command("create", "Create an article")
-	bundlePath    = createCommand.Arg("bundlePath", "Path to the bundle. It should contain article.json and any images that are referenced within it").Required().ExistingFileOrDir()
+	bundlePath    = createCommand.Arg("bundlePath", "Path to the bundle directory. It should contain article.json and any images that are referenced within it").Required().ExistingDir()
 	createOptions = newCreateUpdateOptions(createCommand)
 
 	updateCommand    = kingpin.Command("update", "Update an article")
@@ -59,7 +62,7 @@ func main() {
 	baseURL := *baseUrl
 	articleID := *articleId
 
-	c := api.NewClient(&http.Client{}, baseURL, key, secret, channelID)
+	c := api.NewClient(&http.Client{}, key, secret, baseURL, channelID)
 
 	switch command {
 	case "read article":
@@ -129,12 +132,27 @@ func main() {
 		fmt.Println(string(j))
 
 	case "create":
-		f, err := os.Open(*bundlePath)
+		articleJsonFile, err := os.Open(filepath.Join(*bundlePath, "article.json"))
 		if err != nil {
 			errorAndDie(err)
 		}
-		defer f.Close()
-		c.CreateArticle(f, nil)
+
+		articleBytes, err := ioutil.ReadAll(articleJsonFile)
+		if err != nil {
+			errorAndDie(err)
+		}
+
+		bundleComponents, err := api.GetBundleComponents(bytes.NewReader(articleBytes), *bundlePath)
+		if err != nil {
+			errorAndDie(err)
+		}
+
+		resp, err := c.CreateArticle(bytes.NewReader(articleBytes), bundleComponents, &api.Metadata{})
+		if err != nil {
+			errorAndDie(err)
+		}
+
+		printResposne(resp)
 	case "update":
 		if len(*updateBundlePath) > 0 {
 			f, err := os.Open(*bundlePath)
@@ -143,7 +161,11 @@ func main() {
 			}
 			defer f.Close()
 
-			c.UpdateArticle(articleID, f, updateOptions)
+			resp, err := c.UpdateArticle(articleID, f, updateOptions)
+			if err != nil {
+				errorAndDie(err)
+			}
+			printResposne(resp)
 		} else {
 			c.UpdateArticleMetadata(articleID, updateOptions)
 		}
@@ -172,6 +194,14 @@ func newSearchOptions(cmd *kingpin.CmdClause) *api.SearchArticlesOptions {
 	cmd.Flag("pageSize", "The amount of articles per page to return").IntVar(&defaultSearchOpts.PageSize)
 	cmd.Flag("sortDir", "Direction to sort by date").HintOptions(api.SORTDIR_ASC, api.SORTDIR_DESC).EnumVar(&defaultSearchOpts.SortDir, api.SORTDIR_ASC, api.SORTDIR_DESC)
 	return defaultSearchOpts
+}
+
+func printResposne(resp interface{}) {
+	respBytes, err := json.Marshal(resp)
+	if err != nil {
+		errorAndDie(err)
+	}
+	fmt.Println(string(respBytes))
 }
 
 func errorAndDie(err error) {
