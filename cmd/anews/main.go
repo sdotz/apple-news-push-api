@@ -157,13 +157,13 @@ func main() {
 
 func newCreateUpdateOptions(cmd *kingpin.CmdClause) *api.Metadata {
 	options := &api.Metadata{}
-	cmd.Flag("sections", "The sections the article should appear in").StringsVar(&options.Links.Sections)
-	cmd.Flag("isSponsored", "Marks the article as sponsored").BoolVar(&options.IsSponsored)
-	cmd.Flag("isPreview", "Sets the article to preview mode").BoolVar(&options.IsPreview)
-	cmd.Flag("accessoryText", "Sets text below the article excerpt in channel view. Default is the author").StringVar(&options.AccessoryText)
-	cmd.Flag("maturityRating", "Sets the article's maturity rating").HintOptions(api.MaturityRatingKids, api.MaturityRatingMature, api.MaturityRatingGeneral).EnumVar(&options.MaturityRating, api.MaturityRatingKids, api.MaturityRatingMature, api.MaturityRatingGeneral)
-	cmd.Flag("isCandidateToBeFeatured", "Sets the article as a candidate to be featured").BoolVar(&options.IsCandidateToBeFeatured)
-	cmd.Flag("isHidden", "Sets the article to hidden").BoolVar(&options.IsHidden)
+	cmd.Flag("sections", "The sections the article should appear in").StringsVar(&options.Data.Links.Sections)
+	cmd.Flag("isSponsored", "Marks the article as sponsored").BoolVar(&options.Data.IsSponsored)
+	cmd.Flag("isPreview", "Sets the article to preview mode").BoolVar(&options.Data.IsPreview)
+	cmd.Flag("accessoryText", "Sets text below the article excerpt in channel view. Default is the author").StringVar(&options.Data.AccessoryText)
+	cmd.Flag("maturityRating", "Sets the article's maturity rating").HintOptions(api.MaturityRatingKids, api.MaturityRatingMature, api.MaturityRatingGeneral).EnumVar(&options.Data.MaturityRating, api.MaturityRatingKids, api.MaturityRatingMature, api.MaturityRatingGeneral)
+	cmd.Flag("isCandidateToBeFeatured", "Sets the article as a candidate to be featured").BoolVar(&options.Data.IsCandidateToBeFeatured)
+	cmd.Flag("isHidden", "Sets the article to hidden").BoolVar(&options.Data.IsHidden)
 	return options
 }
 

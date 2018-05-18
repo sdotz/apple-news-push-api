@@ -48,7 +48,7 @@ type MultipartUploadComponent struct {
 	ContentType
 }
 
-type Metadata struct {
+type Data struct {
 	Links struct {
 		Sections []string `json:"sections,omitempty"`
 	} `json:"links,omitempty"`
@@ -59,6 +59,10 @@ type Metadata struct {
 	IsCandidateToBeFeatured bool   `json:"isCandidateToBeFeatured,omitempty"`
 	IsHidden                bool   `json:"isHidden,omitempty"`
 	Revision                string `json:"revision,omitempty"`
+}
+
+type Metadata struct {
+	Data Data `json:"data"`
 }
 
 type PromoteArticlesRequest struct {
