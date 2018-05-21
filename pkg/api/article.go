@@ -12,11 +12,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
-	"regexp"
-	"github.com/prometheus/common/log"
 	"os"
 	"path/filepath"
+	"regexp"
+
+	"github.com/pkg/errors"
 )
 
 type ContentType string
@@ -147,7 +147,7 @@ func GetBundleComponents(articleJson io.Reader, bundleBasePath string) ([]Multip
 
 	articleBytes, err := ioutil.ReadAll(articleJson)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	matches = re.FindAllStringSubmatch(string(articleBytes), -1)
