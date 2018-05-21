@@ -222,7 +222,6 @@ func (c *Client) CreateArticle(article io.Reader, bundleComponents []MultipartUp
 	}
 
 	if resp.StatusCode != http.StatusCreated {
-		fmt.Println(string(metadataBytes))
 		return nil, errors.Errorf("%s returned a %d . reason: %s", url, resp.StatusCode, string(body))
 	}
 
