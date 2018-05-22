@@ -159,7 +159,7 @@ func GetBundleComponents(articleJson io.Reader, bundleBasePath string) ([]Multip
 				return nil, err
 			}
 
-			contentType, err := getContentType(filepath.Ext(bundleFile.Name()))
+			contentType, err := GetContentType(filepath.Ext(bundleFile.Name()))
 			if err != nil {
 				return bundleComponents, err
 			}
@@ -427,7 +427,7 @@ func (c *Client) prepareMultipartRequest(parts []MultipartUploadComponent, url s
 	return req, err
 }
 
-func getContentType(extension string) (ContentType, error) {
+func GetContentType(extension string) (ContentType, error) {
 	switch strings.ToLower(extension) {
 	case ".jpg", ".jpeg":
 		return ContentTypeJpeg, nil
