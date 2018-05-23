@@ -7,11 +7,12 @@ import (
 	"os"
 	"time"
 
+	"bytes"
+	"io/ioutil"
+	"path/filepath"
+
 	"github.com/sdotz/apple-news-push-api/pkg/api"
 	"gopkg.in/alecthomas/kingpin.v2"
-	"path/filepath"
-	"io/ioutil"
-	"bytes"
 )
 
 const defaultBaseURL = "https://news-api.apple.com"
@@ -161,7 +162,7 @@ func main() {
 			}
 			defer f.Close()
 
-			resp, err := c.UpdateArticle(articleID, f, updateOptions)
+			resp, err := c.UpdateArticle(articleID, f, nil, updateOptions)
 			if err != nil {
 				errorAndDie(err)
 			}

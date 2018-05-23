@@ -234,7 +234,7 @@ func (c *Client) CreateArticle(article io.Reader, bundleComponents []MultipartUp
 	return &readArticleResp, resp.Body.Close()
 }
 
-func (c *Client) UpdateArticle(articleId string, article io.Reader, metadata *Metadata) (*ReadArticleResponse, error) {
+func (c *Client) UpdateArticle(articleId string, article io.Reader, bundleComponents []MultipartUploadComponent, metadata *Metadata) (*ReadArticleResponse, error) {
 	url := fmt.Sprintf("%s/articles/%s", c.BaseURL, articleId)
 
 	metadataBytes, err := json.Marshal(metadata)
@@ -255,6 +255,8 @@ func (c *Client) UpdateArticle(articleId string, article io.Reader, metadata *Me
 			ContentType: ContentTypeJson,
 		},
 	}
+
+	parts = append(parts, bundleComponents...)
 
 	req, err := c.prepareMultipartRequest(
 		parts,
