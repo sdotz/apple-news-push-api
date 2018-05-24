@@ -29,6 +29,7 @@ const (
 	ContentTypeGif         ContentType = "image/gif"
 	ContentTypeOctetStream ContentType = "application/octet-stream"
 	ContentTypeJson        ContentType = "application/json"
+	ContentTypeOtf         ContentType = "font/opentype"
 	ContentTypeMultipart   ContentType = "multipart/form-data"
 
 	MaturityRatingKids    = "KIDS"
@@ -437,6 +438,8 @@ func GetContentType(extension string) (ContentType, error) {
 		return ContentTypePng, nil
 	case ".gif":
 		return ContentTypeGif, nil
+	case ".otf":
+		return ContentTypeOtf, nil
 	default:
 		return "", errors.New(fmt.Sprintf("Could not match extension %s to a valid content type", extension))
 	}
