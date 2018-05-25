@@ -37,7 +37,7 @@ func (c *Client) ReadChannel(channelId string) (*ReadChannelResponse, error) {
 	}
 	req.Header.Set("Authorization", auth)
 
-	client := &http.Client{}
+	client := c.Client
 
 	resp, err := client.Do(req)
 	if err != nil {

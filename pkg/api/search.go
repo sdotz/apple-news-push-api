@@ -99,7 +99,7 @@ func (c *Client) SearchArticles(options *SearchArticlesOptions) (*SearchArticles
 	}
 	req.Header.Set("Authorization", auth)
 
-	client := &http.Client{}
+	client := c.Client
 
 	resp, err := client.Do(req)
 	if err != nil {

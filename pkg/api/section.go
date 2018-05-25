@@ -50,7 +50,7 @@ func (c *Client) ReadSection(sectionId string) (*ReadSectionResponse, error) {
 	}
 	req.Header.Set("Authorization", auth)
 
-	client := &http.Client{}
+	client := c.Client
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -86,7 +86,7 @@ func (c *Client) ListSections() (*ListSectionsResponse, error) {
 	}
 	req.Header.Set("Authorization", auth)
 
-	client := &http.Client{}
+	client := c.Client
 
 	resp, err := client.Do(req)
 	if err != nil {
