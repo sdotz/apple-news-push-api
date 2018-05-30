@@ -52,6 +52,12 @@ var (
 
 	deleteCommand   = kingpin.Command("delete", "Delete an article")
 	deleteArticleId = deleteCommand.Arg("article ID", "The ID of the article to delete").Required().String()
+
+	pushCommand           = kingpin.Command("push", "Send a push notification")
+	notificationArticleId = pushCommand.Arg("articleId", "The apple ID of the article to send the notification to").Required().String()
+	alertBody             = pushCommand.Arg("alertBody", "The body of the push notification to send").Required().String()
+	countries             = pushCommand.Flag("countries", "The countries to send the push notificstion to").HintOptions(api.CountryEU, api.CountryGB, api.CountryUS).Enums(api.CountryEU, api.CountryGB, api.CountryUS)
+	ignoreWarnings        = pushCommand.Flag("ignoreWarnings", "Ignore warnings about alert length. (Best practice is <= 130 characters, and anything > 500 chars will be truncated.)").Bool()
 )
 
 func main() {
@@ -174,6 +180,12 @@ func main() {
 		c.PromoteArticles(*promoteSectionId, *promoteArticleIds)
 	case "delete":
 		c.DeleteArticle(*deleteArticleId)
+	case "push":
+		resp, err := c.SendNotification(*notificationArticleId, *alertBody, *countries, *ignoreWarnings)
+		if err != nil {
+			errorAndDie(err)
+		}
+		printResposne(resp)
 	}
 
 }
@@ -203,9 +215,10 @@ func printResposne(resp interface{}) {
 		errorAndDie(err)
 	}
 	fmt.Println(string(respBytes))
+	os.Exit(0)
 }
 
 func errorAndDie(err error) {
-	fmt.Printf("%v", err)
+	fmt.Fprintln(os.Stderr, err.Error())
 	os.Exit(1)
 }
