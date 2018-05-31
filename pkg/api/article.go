@@ -76,6 +76,12 @@ type PromoteArticlesRequest struct {
 	} `json:"data"`
 }
 
+type PromoteArticlesResponse struct {
+	Data struct {
+		PromotedArticles []string `json:"promotedArticles"`
+	} `json:"data"`
+}
+
 type ReadArticleResponse struct {
 	Data struct {
 		CreatedAt               time.Time     `json:"createdAt"`
@@ -235,13 +241,17 @@ func (c *Client) CreateArticle(article io.Reader, bundleComponents []MultipartUp
 	return &readArticleResp, resp.Body.Close()
 }
 
-func (c *Client) UpdateArticle(articleId string, article io.Reader, bundleComponents []MultipartUploadComponent, metadata *Metadata) (*ReadArticleResponse, error) {
+func (c *Client) UpdateArticle(articleId string, revision string, article io.Reader, bundleComponents []MultipartUploadComponent, metadata *Metadata) (*ReadArticleResponse, error) {
 	url := fmt.Sprintf("%s/articles/%s", c.BaseURL, articleId)
+
+	metadata.Data.Revision = revision
 
 	metadataBytes, err := json.Marshal(metadata)
 	if err != nil {
 		return nil, err
 	}
+
+	metadata.Data.Revision = revision
 
 	parts := []MultipartUploadComponent{
 		{
@@ -292,12 +302,12 @@ func (c *Client) UpdateArticle(articleId string, article io.Reader, bundleCompon
 	return &readArticleResp, resp.Body.Close()
 }
 
-func (c *Client) UpdateArticleMetadata(articleId string, metadata *Metadata) error {
+func (c *Client) UpdateArticleMetadata(articleId string, metadata *Metadata) (*ReadArticleResponse, error) {
 	url := fmt.Sprintf("%s/articles/%s", c.BaseURL, articleId)
 
 	metadataBytes, err := json.Marshal(metadata)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	req, err := c.prepareMultipartRequest(
@@ -312,27 +322,33 @@ func (c *Client) UpdateArticleMetadata(articleId string, metadata *Metadata) err
 	)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	resp, err := c.Client.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return errors.Errorf("%s returned a %d . reason: ", url, resp.StatusCode, string(body))
+		return nil, errors.Errorf("%s returned a %d . reason: ", url, resp.StatusCode, string(body))
 	}
 
-	return resp.Body.Close()
+	var readArticleResp ReadArticleResponse
+	err = json.Unmarshal(body, &readArticleResp)
+	if err != nil {
+		return nil, err
+	}
+
+	return &readArticleResp, resp.Body.Close()
 }
 
-func (c *Client) PromoteArticles(sectionId string, articleIds []string) error {
+func (c *Client) PromoteArticles(sectionId string, articleIds []string) (*PromoteArticlesResponse, error) {
 	url := fmt.Sprintf("%s/sections/%s/promotedArticles", c.BaseURL, sectionId)
 
 	promotedArticles := PromoteArticlesRequest{}
@@ -343,23 +359,35 @@ func (c *Client) PromoteArticles(sectionId string, articleIds []string) error {
 
 	bodyBytes, err := json.Marshal(promotedArticles)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(bodyBytes))
 
 	auth, err := c.getAuthorization(http.MethodPost, url, "", ioutil.NopCloser(bytes.NewReader([]byte{})))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	req.Header.Set("Authorization", auth)
 
 	resp, err := c.Client.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return resp.Body.Close()
+	b, _ := ioutil.ReadAll(resp.Body)
+
+	if resp.StatusCode != 200 {
+		return nil, errors.Errorf("%s returned a %d . reason: ", url, resp.StatusCode, string(b))
+	}
+
+	var promoteArticlesResponse PromoteArticlesResponse
+	err = json.Unmarshal(b, &promoteArticlesResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	return &promoteArticlesResponse, resp.Body.Close()
 }
 
 func (c *Client) DeleteArticle(articleId string) error {
@@ -380,7 +408,11 @@ func (c *Client) DeleteArticle(articleId string) error {
 		return err
 	}
 
-	return resp.Body.Close()
+	if resp.StatusCode != 204 {
+		b, _ := ioutil.ReadAll(resp.Body)
+		return errors.Errorf("%s returned a %d . reason: ", url, resp.StatusCode, string(b))
+	}
+	return nil
 }
 
 func (c *Client) prepareMultipartRequest(parts []MultipartUploadComponent, url string) (*http.Request, error) {

@@ -9,8 +9,9 @@ The library aims to be complete and easy to use both as tool for interacting wit
 - [X] Implement all API methods and options
 - [X] CLI
 - [X] Push notifications
+- [X] Scan article.json for bundle:// URLs, find those files in the bundle, and add to multipart upload
 - [ ] Refactor all API methods to return response objects and move JSON printing out to CLI land
-- [ ] Scan article.json for bundle:// URLs, find those files in the bundle, and add to multipart upload
+- [ ] Add ability to download a bundle locally (also w/ font files stored somewhere)
 - [ ] Make CLI friendly with validations and meaningful errors
 - [ ] Add tests
 - [ ] Clean up project structure, dirs, package names etc.

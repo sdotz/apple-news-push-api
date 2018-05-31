@@ -162,24 +162,35 @@ func main() {
 		printResposne(resp)
 	case "update":
 		if len(*updateBundlePath) > 0 {
-			f, err := os.Open(*bundlePath)
+			articleJsonFile, err := os.Open(filepath.Join(*updateBundlePath, "article.json"))
 			if err != nil {
 				errorAndDie(err)
 			}
-			defer f.Close()
+			defer articleJsonFile.Close()
 
-			resp, err := c.UpdateArticle(articleID, f, nil, updateOptions)
+			resp, err := c.UpdateArticle(*updateArticleId, *revision, articleJsonFile, nil, updateOptions)
 			if err != nil {
 				errorAndDie(err)
 			}
 			printResposne(resp)
 		} else {
-			c.UpdateArticleMetadata(articleID, updateOptions)
+			resp, err := c.UpdateArticleMetadata(articleID, updateOptions)
+			if err != nil {
+				errorAndDie(err)
+			}
+			printResposne(resp)
 		}
 	case "promote":
-		c.PromoteArticles(*promoteSectionId, *promoteArticleIds)
+		resp, err := c.PromoteArticles(*promoteSectionId, *promoteArticleIds)
+		if err != nil {
+			errorAndDie(err)
+		}
+		printResposne(resp)
 	case "delete":
-		c.DeleteArticle(*deleteArticleId)
+		err := c.DeleteArticle(*deleteArticleId)
+		if err != nil {
+			errorAndDie(err)
+		}
 	case "push":
 		resp, err := c.SendNotification(*notificationArticleId, *alertBody, *countries, *ignoreWarnings)
 		if err != nil {
