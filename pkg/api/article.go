@@ -54,9 +54,7 @@ type MultipartUploadComponent struct {
 }
 
 type Data struct {
-	Links struct {
-		Sections []string `json:"sections,omitempty"`
-	} `json:"links,omitempty"`
+	Links                   Links  `json:"links,omitempty"`
 	IsSponsored             bool   `json:"isSponsored,omitempty"`
 	IsPreview               bool   `json:"isPreview,omitempty"`
 	AccessoryText           string `json:"accessoryText,omitempty"`

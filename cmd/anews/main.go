@@ -159,7 +159,7 @@ func main() {
 			errorAndDie(err)
 		}
 
-		printResposne(resp)
+		printResponse(resp)
 	case "update":
 		if len(*updateBundlePath) > 0 {
 			articleJsonFile, err := os.Open(filepath.Join(*updateBundlePath, "article.json"))
@@ -172,20 +172,20 @@ func main() {
 			if err != nil {
 				errorAndDie(err)
 			}
-			printResposne(resp)
+			printResponse(resp)
 		} else {
 			resp, err := c.UpdateArticleMetadata(articleID, updateOptions)
 			if err != nil {
 				errorAndDie(err)
 			}
-			printResposne(resp)
+			printResponse(resp)
 		}
 	case "promote":
 		resp, err := c.PromoteArticles(*promoteSectionId, *promoteArticleIds)
 		if err != nil {
 			errorAndDie(err)
 		}
-		printResposne(resp)
+		printResponse(resp)
 	case "delete":
 		err := c.DeleteArticle(*deleteArticleId)
 		if err != nil {
@@ -196,7 +196,7 @@ func main() {
 		if err != nil {
 			errorAndDie(err)
 		}
-		printResposne(resp)
+		printResponse(resp)
 	}
 
 }
@@ -220,7 +220,7 @@ func newSearchOptions(cmd *kingpin.CmdClause) *api.SearchArticlesOptions {
 	return defaultSearchOpts
 }
 
-func printResposne(resp interface{}) {
+func printResponse(resp interface{}) {
 	respBytes, err := json.Marshal(resp)
 	if err != nil {
 		errorAndDie(err)
