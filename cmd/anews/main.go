@@ -154,7 +154,7 @@ func main() {
 			errorAndDie(err)
 		}
 
-		resp, err := c.CreateArticle(bytes.NewReader(articleBytes), bundleComponents, &api.Metadata{})
+		resp, err := c.CreateArticle(bytes.NewReader(articleBytes), bundleComponents, createOptions)
 		if err != nil {
 			errorAndDie(err)
 		}
@@ -210,6 +210,7 @@ func newCreateUpdateOptions(cmd *kingpin.CmdClause) *api.Metadata {
 	cmd.Flag("maturityRating", "Sets the article's maturity rating").HintOptions(api.MaturityRatingKids, api.MaturityRatingMature, api.MaturityRatingGeneral).EnumVar(&options.Data.MaturityRating, api.MaturityRatingKids, api.MaturityRatingMature, api.MaturityRatingGeneral)
 	cmd.Flag("isCandidateToBeFeatured", "Sets the article as a candidate to be featured").BoolVar(&options.Data.IsCandidateToBeFeatured)
 	cmd.Flag("isHidden", "Sets the article to hidden").BoolVar(&options.Data.IsHidden)
+	cmd.Flag("isDevelopingStory", "Sets the article as developing, which can help get timely updates to it faster").BoolVar(&options.Data.IsDevelopingStory)
 	return options
 }
 

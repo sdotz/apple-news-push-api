@@ -60,6 +60,7 @@ type Data struct {
 	AccessoryText           string `json:"accessoryText,omitempty"`
 	MaturityRating          string `json:"maturityRating,omitempty"`
 	IsCandidateToBeFeatured bool   `json:"isCandidateToBeFeatured,omitempty"`
+	IsDevelopingStory       bool   `json:"isDevelopingStory,omitempty"`
 	IsHidden                bool   `json:"isHidden,omitempty"`
 	Revision                string `json:"revision,omitempty"`
 }
