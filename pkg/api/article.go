@@ -289,7 +289,7 @@ func (c *Client) UpdateArticle(articleId string, revision string, article io.Rea
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.Errorf("%s returned a %d . reason: ", url, resp.StatusCode, string(body))
+		return nil, errors.Errorf("%s returned a %d . reason: %s", url, resp.StatusCode, string(body))
 	}
 
 	var readArticleResp ReadArticleResponse

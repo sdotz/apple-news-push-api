@@ -178,7 +178,7 @@ func main() {
 				errorAndDie(err)
 			}
 
-			resp, err := c.UpdateArticle(*updateArticleId, *revision, articleJsonFile, bundleComponents, updateOptions)
+			resp, err := c.UpdateArticle(*updateArticleId, *revision, bytes.NewReader(articleBytes), bundleComponents, updateOptions)
 			if err != nil {
 				errorAndDie(err)
 			}
