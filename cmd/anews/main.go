@@ -168,7 +168,17 @@ func main() {
 			}
 			defer articleJsonFile.Close()
 
-			resp, err := c.UpdateArticle(*updateArticleId, *revision, articleJsonFile, nil, updateOptions)
+			articleBytes, err := ioutil.ReadAll(articleJsonFile)
+			if err != nil {
+				errorAndDie(err)
+			}
+
+			bundleComponents, err := api.GetBundleComponents(bytes.NewReader(articleBytes), *updateBundlePath)
+			if err != nil {
+				errorAndDie(err)
+			}
+
+			resp, err := c.UpdateArticle(*updateArticleId, *revision, articleJsonFile, bundleComponents, updateOptions)
 			if err != nil {
 				errorAndDie(err)
 			}
