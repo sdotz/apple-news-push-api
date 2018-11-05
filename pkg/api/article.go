@@ -335,7 +335,7 @@ func (c *Client) UpdateArticleMetadata(articleId string, metadata *Metadata) (*R
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.Errorf("%s returned a %d . reason: ", url, resp.StatusCode, string(body))
+		return nil, errors.Errorf("%s returned a %d . reason: %s", url, resp.StatusCode, string(body))
 	}
 
 	var readArticleResp ReadArticleResponse
@@ -377,7 +377,7 @@ func (c *Client) PromoteArticles(sectionId string, articleIds []string) (*Promot
 	b, _ := ioutil.ReadAll(resp.Body)
 
 	if resp.StatusCode != 200 {
-		return nil, errors.Errorf("%s returned a %d . reason: ", url, resp.StatusCode, string(b))
+		return nil, errors.Errorf("%s returned a %d . reason: %s", url, resp.StatusCode, string(b))
 	}
 
 	var promoteArticlesResponse PromoteArticlesResponse
@@ -409,7 +409,7 @@ func (c *Client) DeleteArticle(articleId string) error {
 
 	if resp.StatusCode != 204 {
 		b, _ := ioutil.ReadAll(resp.Body)
-		return errors.Errorf("%s returned a %d . reason: ", url, resp.StatusCode, string(b))
+		return errors.Errorf("%s returned a %d . reason: %s", url, resp.StatusCode, string(b))
 	}
 	return nil
 }
