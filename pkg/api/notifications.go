@@ -90,7 +90,7 @@ func (c *Client) SendNotification(articleId string, alertBody string, countries 
 
 	b, _ := ioutil.ReadAll(resp.Body)
 	if resp.StatusCode != http.StatusCreated {
-		return nil, errors.Errorf("%s returned a %d . reason: ", url, resp.StatusCode, string(b))
+		return nil, errors.Errorf("%s returned a %d . reason: %s", url, resp.StatusCode, string(b))
 	}
 
 	var notificationResponse NotificationResponse
