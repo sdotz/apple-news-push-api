@@ -363,7 +363,7 @@ func (c *Client) PromoteArticles(sectionId string, articleIds []string) (*Promot
 
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(bodyBytes))
 
-	auth, err := c.getAuthorization(http.MethodPost, url, "", ioutil.NopCloser(bytes.NewReader([]byte{})))
+	auth, err := c.getAuthorization(http.MethodPost, url, "", ioutil.NopCloser(bytes.NewReader(bodyBytes)))
 	if err != nil {
 		return nil, err
 	}
