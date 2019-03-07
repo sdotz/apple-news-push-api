@@ -30,6 +30,10 @@ const (
 	ContentTypeOctetStream ContentType = "application/octet-stream"
 	ContentTypeJson        ContentType = "application/json"
 	ContentTypeOtf         ContentType = "font/opentype"
+	ContentTypeHtml        ContentType = "text/html"
+	ContentTypeCss         ContentType = "text/css"
+	ContentTypeJs          ContentType = "text/javascript"
+	ContentTypeManifest    ContentType = "text/cache-manifest"
 	ContentTypeMultipart   ContentType = "multipart/form-data"
 
 	MaturityRatingKids    = "KIDS"
@@ -177,10 +181,47 @@ func GetBundleComponents(articleJson io.Reader, bundleBasePath string) ([]Multip
 				ContentType: contentType,
 			}
 			bundleComponents = append(bundleComponents, component)
+
+			if contentType == ContentTypeHtml {
+				additionalWebComponents, err := getAdditionalWebComponents(bundleBasePath)
+				if err != nil {
+					return nil, err
+				}
+				bundleComponents = append(bundleComponents, additionalWebComponents...)
+			}
 		}
 	}
 
 	return bundleComponents, nil
+}
+
+func getAdditionalWebComponents(bundleBasePath string) ([]MultipartUploadComponent, error) {
+	var components []MultipartUploadComponent
+	files, err := ioutil.ReadDir(bundleBasePath)
+
+	if err != nil {
+		return nil, err
+	}
+	for _, f := range files {
+		extension := strings.Split(f.Name(), ".")[1]
+		if extension == "css" || extension == "js" || extension == "manifest" {
+			contentType, err := GetContentType("." + extension)
+			if err != nil {
+				return nil, err
+			}
+			bundleFile, err := os.Open(filepath.Join(bundleBasePath, f.Name()))
+			if err != nil {
+				return nil, err
+			}
+			components = append(components, MultipartUploadComponent{
+				Data:        bundleFile,
+				Name:        strings.Split(filepath.Base(bundleFile.Name()), ".")[0],
+				FileName:    filepath.Base(bundleFile.Name()),
+				ContentType: contentType,
+			})
+		}
+	}
+	return components, nil
 }
 
 func (c *Client) CreateArticle(article io.Reader, bundleComponents []MultipartUploadComponent, metadata *Metadata) (*ReadArticleResponse, error) {
@@ -471,6 +512,14 @@ func GetContentType(extension string) (ContentType, error) {
 		return ContentTypeGif, nil
 	case ".otf":
 		return ContentTypeOtf, nil
+	case ".html":
+		return ContentTypeHtml, nil
+	case ".manifest":
+		return ContentTypeManifest, nil
+	case ".css":
+		return ContentTypeCss, nil
+	case ".js":
+		return ContentTypeJs, nil
 	default:
 		return "", errors.New(fmt.Sprintf("Could not match extension %s to a valid content type", extension))
 	}
