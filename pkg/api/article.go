@@ -29,7 +29,6 @@ const (
 	ContentTypeGif         ContentType = "image/gif"
 	ContentTypeOctetStream ContentType = "application/octet-stream"
 	ContentTypeJson        ContentType = "application/json"
-	ContentTypeOtf         ContentType = "font/opentype"
 	ContentTypeHtml        ContentType = "text/html"
 	ContentTypeCss         ContentType = "text/css"
 	ContentTypeJs          ContentType = "text/javascript"
@@ -510,8 +509,6 @@ func GetContentType(extension string) (ContentType, error) {
 		return ContentTypePng, nil
 	case ".gif":
 		return ContentTypeGif, nil
-	case ".otf":
-		return ContentTypeOtf, nil
 	case ".html":
 		return ContentTypeHtml, nil
 	case ".manifest":
