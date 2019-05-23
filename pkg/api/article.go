@@ -72,6 +72,15 @@ type Metadata struct {
 	Data Data `json:"data"`
 }
 
+type Meta struct {
+	Throttling struct {
+		IsThrottled             bool `json:"isThrottled,omitempty"`
+		QuotaAvailable          int  `json:"quotaAvailable,omitempty"`
+		QueueSize               int  `json:"queueSize,omitempty"`
+		EstimatedDelayInSeconds int  `json:"estimatedDelayInSeconds,omitempty"`
+	} `json:"throttling,omitempty"`
+}
+
 type PromoteArticlesRequest struct {
 	Data struct {
 		PromotedArticles []string `json:"promotedArticles"`
@@ -105,6 +114,7 @@ type ReadArticleResponse struct {
 		IsDevelopingStory       bool          `json:"isDevelopingStory"`
 		IsHidden                bool          `json:"isHidden"`
 	} `json:"data"`
+	Meta Meta `json:"meta,omitempty"`
 }
 
 type BundleComponent struct {

@@ -33,7 +33,7 @@ type SearchArticlesOptions struct {
 	PageToken string
 }
 
-type Meta struct {
+type SearchResponseMeta struct {
 	NextPageToken string `json:"nextPageToken,omitempty"`
 }
 
@@ -57,8 +57,8 @@ type SearchArticlesResponse struct {
 		IsDevelopingStory       bool          `json:"isDevelopingStory"`
 		IsHidden                bool          `json:"isHidden"`
 	} `json:"data"`
-	Links Links `json:"links,omitempty"`
-	Meta  Meta  `json:"meta,omitempty"`
+	Links Links              `json:"links,omitempty"`
+	Meta  SearchResponseMeta `json:"meta,omitempty"`
 }
 
 func DefaultSearchArticlesOptions() *SearchArticlesOptions {
