@@ -95,24 +95,25 @@ type PromoteArticlesResponse struct {
 
 type ReadArticleResponse struct {
 	Data struct {
-		CreatedAt               time.Time     `json:"createdAt"`
-		ModifiedAt              time.Time     `json:"modifiedAt"`
-		ID                      string        `json:"id"`
-		Type                    string        `json:"type"`
-		ShareURL                string        `json:"shareUrl"`
-		Links                   Links         `json:"links"`
-		Document                interface{}   `json:"document"`
-		Revision                string        `json:"revision"`
-		State                   string        `json:"state"`
-		AccessoryText           string        `json:"accessoryText"`
-		Title                   string        `json:"title"`
-		MaturityRating          string        `json:"maturityRating"`
-		Warnings                []interface{} `json:"warnings"`
-		IsCandidateToBeFeatured bool          `json:"isCandidateToBeFeatured"`
-		IsSponsored             bool          `json:"isSponsored"`
-		IsPreview               bool          `json:"isPreview"`
-		IsDevelopingStory       bool          `json:"isDevelopingStory"`
-		IsHidden                bool          `json:"isHidden"`
+		CreatedAt                   time.Time     `json:"createdAt"`
+		ModifiedAt                  time.Time     `json:"modifiedAt"`
+		ID                          string        `json:"id"`
+		Type                        string        `json:"type"`
+		ShareURL                    string        `json:"shareUrl"`
+		Links                       Links         `json:"links"`
+		Document                    interface{}   `json:"document"`
+		Revision                    string        `json:"revision"`
+		State                       string        `json:"state"`
+		AccessoryText               string        `json:"accessoryText"`
+		Title                       string        `json:"title"`
+		MaturityRating              string        `json:"maturityRating"`
+		Warnings                    []interface{} `json:"warnings"`
+		TargetTerritoryCountryCodes []string      `json:"targetTerritoryCountryCodes"`
+		IsCandidateToBeFeatured     bool          `json:"isCandidateToBeFeatured"`
+		IsSponsored                 bool          `json:"isSponsored"`
+		IsPreview                   bool          `json:"isPreview"`
+		IsDevelopingStory           bool          `json:"isDevelopingStory"`
+		IsHidden                    bool          `json:"isHidden"`
 	} `json:"data"`
 	Meta Meta `json:"meta,omitempty"`
 }
