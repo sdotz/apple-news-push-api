@@ -401,7 +401,7 @@ func (c *Client) PromoteArticles(sectionId string, articleIds []string) (*Promot
 		return nil, err
 	}
 
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(bodyBytes))
+	req, _ := http.NewRequest(http.MethodPost, url, bytes.NewReader(bodyBytes))
 
 	auth, err := c.getAuthorization(http.MethodPost, url, "", ioutil.NopCloser(bytes.NewReader(bodyBytes)))
 	if err != nil {
