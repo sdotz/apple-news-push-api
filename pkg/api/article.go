@@ -242,6 +242,11 @@ func (c *Client) CreateArticle(article io.Reader, bundleComponents []MultipartUp
 		return nil, err
 	}
 
+	articleBytes, err := ioutil.ReadAll(article)
+	if err != nil {
+		return nil, err
+	}
+
 	multipartComponents := []MultipartUploadComponent{
 		{
 			Data:        bytes.NewReader(metadataBytes),
@@ -249,7 +254,7 @@ func (c *Client) CreateArticle(article io.Reader, bundleComponents []MultipartUp
 			ContentType: ContentTypeJson,
 		},
 		{
-			Data:        article,
+			Data:        bytes.NewReader(articleBytes),
 			Name:        "article.json",
 			FileName:    "article.json",
 			ContentType: ContentTypeJson,
@@ -279,7 +284,7 @@ func (c *Client) CreateArticle(article io.Reader, bundleComponents []MultipartUp
 	}
 
 	if resp.StatusCode != http.StatusCreated {
-		return nil, errors.Errorf("%s returned a %d . reason: %s", url, resp.StatusCode, string(body))
+		return nil, errors.Errorf("%s returned a %d . reason: %s\n%s", url, resp.StatusCode, string(body), string(articleBytes))
 	}
 
 	var readArticleResp ReadArticleResponse
